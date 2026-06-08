@@ -23,9 +23,13 @@
 
 ## Database Tables
 
-- Table `users` - contains xx yy zz
-- Table `something` - contains ww qq ss
-- ...
+- Table `users` - contains registered users, hashed passwords and salts
+- Table `stations` - contains underground stations
+- Table `lines` - contains underground lines
+- Table `line_stations` - associates stations with lines and stores their order
+- Table `games` - contains information about each played game
+- Table `game_steps` - contains every segment travelled during a game and the associated event
+- Table `events` - contains random events and their effects on coins
 
 ## Main React Components
 
@@ -41,8 +45,9 @@
 
 ## Users Credentials
 
-- username, password (plus any other requested info)
-- username, password (plus any other requested info)
+- username: sofia, password: Sofia2026!
+- username: mario, password: Marioo00
+- username: anna, password: Verdi99!
 
 ## Use of AI Tools
 Briefly describe whether you used any AI tools (e.g., ChatGPT, GitHub Copilot, Claude) while working on this project, for which purposes (e.g., clarifying concepts, debugging, generating code), and how you verified or adapted their output.
