@@ -1,0 +1,23 @@
+### Login
+POST http://localhost:3001/api/sessions
+Content-Type: application/json
+
+{
+  "username": "anna",
+  "password": "Verdi99!"
+}
+
+### Login (wrong password)
+POST http://localhost:3001/api/sessions
+Content-Type: application/json
+
+{
+  "username": "anna",
+  "password": "Wrong_password"
+}
+
+### Current user
+GET http://localhost:3001/api/sessions/current
+
+### Logout
+DELETE http://localhost:3001/api/sessions/current

@@ -10,16 +10,45 @@
 
 ## API Server
 
-- POST `/api/something`
-  - request parameters and request body content
-  - response body content
-- GET `/api/something`
-  - request parameters
-  - response body content
-- POST `/api/something`
-  - request parameters and request body content
-  - response body content
-- ...
+- POST `/api/sessions`  
+  - Description: create a new session (i.e., perform the login)
+  - Request body: a JSON object with username and password
+
+    ```
+    { 
+      "username": "anna", 
+      "password": "Verdi99!" 
+    }
+    ```
+  - Response: `201 Created` (success) or `401 Unauthorized` (failure, not authenticated)  
+  - Response body: a JSON object representing the authenticated user
+
+    ```
+    { "id": 3, 
+    "username": "anna", 
+    "name": "Anna Verdi" 
+    }
+    ```
+
+- GET `/api/sessions/current`    
+  - Description: check if the user is still logged in
+  - Request body: none
+  - Response: `200 OK` (success) or `401 Unauthorized` (failure, not authenticated)
+  - Response body: a JSON object representing the authenticated user
+
+    ```
+    { "id": 3, 
+    "username": "anna", 
+    "name": "Anna Verdi" 
+    }
+    ```
+
+- DELETE `/api/sessions/current`
+  - Description: delete the session for the current user (i.e., perform the logout)
+  - Request body: none
+  - Response: `200 OK` (success)
+  - Response body: none
+
 
 ## Database Tables
 
