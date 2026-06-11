@@ -21,3 +21,12 @@ GET http://localhost:3001/api/sessions/current
 
 ### Logout
 DELETE http://localhost:3001/api/sessions/current
+
+### Network
+GET http://localhost:3001/api/network
+
+### Planning network
+GET http://localhost:3001/api/network/planning
+
+### Leaderboard
+GET http://localhost:3001/api/leaderboard

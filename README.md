@@ -38,8 +38,8 @@
 
     ```
     { "id": 3, 
-    "username": "anna", 
-    "name": "Anna Verdi" 
+      "username": "anna", 
+      "name": "Anna Verdi" 
     }
     ```
 
@@ -49,6 +49,100 @@
   - Response: `200 OK` (success)
   - Response body: none
 
+- GET `/api/network`    
+  - Description: returns all stations, all metro lines, the association between stations and lines (including their order on each line) and all directly connected station pairs
+  - Request body: none
+  - Response: `200 OK` (success) or `401 Unauthorized` (failure, not authenticated)
+  - Response body: a JSON object representing the network
+
+    ```
+    {
+      "stations": [
+        {
+          "id": 3,
+          "name": "Baker Street"
+        },
+        {
+          "id": 18,
+          "name": "Barbican"
+        },
+        ...
+      ],
+      "lines": [
+        {
+          "id": 1,
+          "name": "Bakerloo Line",
+          "color": "brown"
+        },
+        {
+          "id": 2,
+          "name": "Central Line",
+          "color": "red"
+        },
+        ...
+      ],
+      "lineStations": [
+        {
+          "lineId": 1,
+          "lineName": "Bakerloo Line",
+          "lineColor": "brown",
+          "stationId": 1,
+          "stationName": "Paddington",
+          "position": 1
+        },
+        {
+          "lineId": 1,
+          "lineName": "Bakerloo Line",
+          "lineColor": "brown",
+          "stationId": 2,
+          "stationName": "Marylebone",
+          "position": 2
+        },
+        ...
+      ],
+      "edges": [
+        {
+          "fromStationId": 3,
+          "fromStationName": "Baker Street",
+          "toStationId": 9,
+          "toStationName": "Bond Street"
+        },
+        {
+          "fromStationId": 3,
+          "fromStationName": "Baker Street",
+          "toStationId": 15,
+          "toStationName": "Great Portland Street"
+        },
+        ...
+      ]
+    }
+    ```
+
+- GET `/api/leaderboard`    
+  - Description: returns the best score of each registered user
+  - Request body: none
+  - Response: `200 OK` (success) or `401 Unauthorized` (failure, not authenticated)
+  - Response body: a JSON object representing the leaderboard
+
+    ```
+    [
+      {
+      "username": "anna",
+      "name": "Anna Verdi",
+      "bestScore": 24
+      },
+      {
+        "username": "mario",
+        "name": "Mario Rossi",
+        "bestScore": 23
+      },
+      {
+        "username": "sofia",
+        "name": "Sofia Mosso",
+        "bestScore": 20
+      }
+    ]
+    ```
 
 ## Database Tables
 

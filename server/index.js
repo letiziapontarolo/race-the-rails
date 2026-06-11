@@ -1,7 +1,7 @@
 // imports
 import express from "express";
 import morgan from "morgan";
-import { getUser } from './dao.js';
+import { getUser, getNetwork, getLeaderboard } from './dao.js';
 import { check, validationResult } from "express-validator";
 
 import passport from 'passport';
@@ -84,6 +84,26 @@ app.delete("/api/sessions/current", (req, res) => {
   req.logout(() => {
     res.end();
   });
+});
+
+// GET /api/network
+app.get('/api/network', isLoggedIn, async (req, res) => {
+  try {
+    const network = await getNetwork();
+    res.json(network);
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/leaderboard
+app.get('/api/leaderboard', isLoggedIn, async (req, res) => {
+  try {
+    const leaderboard = await getLeaderboard();
+    res.json(leaderboard);
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 
