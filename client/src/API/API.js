@@ -73,5 +73,52 @@ const getLeaderboard = async () => {
   }
 };
 
-const API = { logIn, getUserInfo, logOut, getNetwork, getLeaderboard };
+// POST /api/games/start
+const startGame = async () => {
+  const response = await fetch(`${SERVER_URL}/api/games/start`, {
+    method: 'POST',
+    credentials: 'include'
+  });
+
+  if (response.ok) {
+    const game = await response.json();
+    return game;
+  }
+  else {
+    const errMessage = await response.json();
+    throw errMessage.error;
+  }
+};
+
+// POST /api/games/:id/submit
+const submitGame = async (gameId, path) => {
+  const response = await fetch(`${SERVER_URL}/api/games/${gameId}/submit`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    credentials: 'include',
+    body: JSON.stringify({ path })
+  });
+
+  if (response.ok) {
+    const result = await response.json();
+    return result;
+  }
+  else {
+    let errMessage = await response.json();
+
+    if (response.status === 422) {
+      errMessage = `${errMessage.errors[0].msg} for ${errMessage.errors[0].path}.`;
+    }
+    else {
+      errMessage = errMessage.error;
+    }
+
+    throw errMessage;
+  }
+};
+
+
+const API = { logIn, getUserInfo, logOut, getNetwork, getLeaderboard, startGame, submitGame };
 export default API;

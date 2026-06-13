@@ -30,3 +30,14 @@ GET http://localhost:3001/api/network/planning
 
 ### Leaderboard
 GET http://localhost:3001/api/leaderboard
+
+### Start game
+POST http://localhost:3001/api/games/start
+
+### Submit game
+POST http://localhost:3001/api/games/5/submit
+Content-Type: application/json
+
+{
+  "path": [12, 11, 10, 5, 4, 3, 14]
+}

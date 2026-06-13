@@ -1,7 +1,7 @@
 // imports
 import express from "express";
 import morgan from "morgan";
-import { getUser, getNetwork, getLeaderboard } from './dao.js';
+import { getUser, getNetwork, getLeaderboard, startGame, submitGame } from './dao.js';
 import { check, validationResult } from "express-validator";
 
 import passport from 'passport';
@@ -101,6 +101,49 @@ app.get('/api/leaderboard', isLoggedIn, async (req, res) => {
   try {
     const leaderboard = await getLeaderboard();
     res.json(leaderboard);
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/games/start
+app.post('/api/games/start', isLoggedIn, async (req, res) => {
+  try {
+    const game = await startGame(req.user.id);
+    res.status(201).json(game);
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/games/:id/submit
+app.post('/api/games/:id/submit', isLoggedIn, [
+  check('path').isArray({ min: 1 }),
+  check('path.*').isInt({ min: 1 }).toInt()
+  ], async (req, res) => {
+  
+  const errors = validationResult(req);
+    
+  if (!errors.isEmpty()) {
+    return res.status(422).json({ errors: errors.array() });
+  }
+
+  try {
+    const result = await submitGame(
+      req.params.id,
+      req.user.id,
+      req.body.path
+    );
+
+    if (result.notFound) {
+      return res.status(404).json({ error: 'Game not found' });
+    }
+
+    if (result.alreadyCompleted) {
+      return res.status(409).json({ error: 'Game already completed' });
+    }
+
+    res.json(result);
   } catch (err) {
     res.status(500).json({ error: 'Internal server error' });
   }
