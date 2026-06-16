@@ -1,12 +1,11 @@
 [![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/iZes9Qfg)
-# Exam #N: "Exam Title"
-## Student: s123456 LASTNAME FIRSTNAME 
+# Exam #1: "Ultima Corsa"
+## Student: s352496 PONTAROLO LETIZIA 
 
 ## React Client Application Routes
 
-- Route `/`: page content and purpose
-- Route `/something/:param`: page content and purpose, param specification
-- ...
+- Route `/`: home page containing the game instructions. Anonymous users can only access this page
+- Route `/login`: login page
 
 ## API Server
 
@@ -129,9 +128,9 @@
     ```
     [
       {
-      "username": "anna",
-      "name": "Anna Verdi",
-      "bestScore": 24
+        "username": "anna",
+        "name": "Anna Verdi",
+        "bestScore": 24
       },
       {
         "username": "mario",
@@ -228,9 +227,8 @@
 
 ## Main React Components
 
-- `ListOfSomething` (in `List.js`): component purpose and main functionality
-- `GreatButton` (in `GreatButton.js`): component purpose and main functionality
-- ...
+- `Home` (in `Home.jsx`): instructions page
+- `Login` (in `Login.jsx`): login form
 
 (only _main_ components, minor ones may be skipped)
 

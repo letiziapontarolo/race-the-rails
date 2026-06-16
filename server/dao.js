@@ -394,7 +394,8 @@ const completeGame = (gameId, finalScore) => {
 const getGame = (gameId, userId) => {
     return new Promise((resolve, reject) => {
         const sql = `
-      SELECT *
+      SELECT *,
+      (strftime('%s','now','localtime') - strftime('%s', created_at)) AS seconds
       FROM games
       WHERE id = ? AND user_id = ?
     `;
@@ -481,6 +482,17 @@ export const submitGame = async (gameId, userId, path) => {
 
     if (game.status === 'completed') {
         return { alreadyCompleted: true };
+    }
+
+    if (game.seconds > 90) {
+        await completeGame(gameId, 0);
+
+        return {
+            valid: false,
+            reason: 'Time expired',
+            finalScore: 0,
+            steps: []
+        };
     }
 
     const validation = await validatePath(game, path);
