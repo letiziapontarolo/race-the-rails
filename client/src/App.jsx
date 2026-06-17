@@ -1,16 +1,34 @@
 import "bootstrap/dist/css/bootstrap.min.css";
-import { Routes, Route } from "react-router";
+import { Routes, Route, Navigate } from "react-router";
 import { Container } from "react-bootstrap";
-import { useState } from 'react'
+import { useState , useEffect } from 'react'
 
 import Home from "./components/Home.jsx";
 import Login from "./components/Login.jsx";
+import Navigation from "./components/Navigation.jsx";
 
 import './App.css'
 import API from "./API/API.js";
 
 function App() {
   const [loggedIn, setLoggedIn] = useState(false);
+  const [user, setUser] = useState(undefined);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const user = await API.getUserInfo();
+        setLoggedIn(true);
+        setUser(user);
+      } catch {
+        setLoggedIn(false);
+        setUser(undefined);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
 
   const handleLogin = async (credentials) => {
     const user = await API.logIn(credentials);
@@ -25,12 +43,15 @@ function App() {
   };
 
   return (
-    <Container className="py-4">
-      <Routes>
-        <Route path="/" element={<Home loggedIn={false} />} />
-        <Route path="/login" element={loggedIn ? <Navigate replace to="/" /> : <Login onLogin={handleLogin} />} />
-      </Routes>
-    </Container>
+    <>
+      <Navigation user={user} loggedIn={loggedIn} onLogout={handleLogout} />
+      <Container className="py-4">
+        <Routes>
+          <Route path="/" element={<Home loggedIn={loggedIn} />} />
+          <Route path="/login" element={loggedIn ? <Navigate replace to="/" /> : <Login onLogin={handleLogin} />} />
+        </Routes>
+      </Container>
+    </>
   )
 }
 

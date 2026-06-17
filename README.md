@@ -229,8 +229,7 @@
 
 - `Home` (in `Home.jsx`): instructions page
 - `Login` (in `Login.jsx`): login form
-
-(only _main_ components, minor ones may be skipped)
+- `Navigation` (in `Navigation.jsx`): top navigation bar with login/logout, home, leaderboard and play
 
 ## Screenshot
 
