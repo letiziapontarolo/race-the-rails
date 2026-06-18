@@ -395,7 +395,7 @@ const getGame = (gameId, userId) => {
     return new Promise((resolve, reject) => {
         const sql = `
       SELECT *,
-      (strftime('%s','now','localtime') - strftime('%s', created_at)) AS seconds
+      (strftime('%s','now','localtime') - strftime('%s', started_at)) AS seconds
       FROM games
       WHERE id = ? AND user_id = ?
     `;
@@ -441,7 +441,7 @@ export const startGame = async (userId) => {
 
     return new Promise((resolve, reject) => {
         const sql = `
-      INSERT INTO games(user_id, start_station_id, end_station_id, initial_coins, status, created_at)
+      INSERT INTO games(user_id, start_station_id, end_station_id, initial_coins, status, started_at)
       VALUES (?, ?, ?, 20, 'planning', datetime('now', 'localtime'))
     `;
 

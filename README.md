@@ -6,6 +6,8 @@
 
 - Route `/`: home page containing the game instructions. Anonymous users can only access this page
 - Route `/login`: login page
+- Route `/setup`: setup phase showing the complete London Underground map before starting a game
+- Route `/play/:gameId`: planning, execution and result phase of a game identified by gameId
 
 ## API Server
 
@@ -230,6 +232,9 @@
 - `Home` (in `Home.jsx`): instructions page
 - `Login` (in `Login.jsx`): login form
 - `Navigation` (in `Navigation.jsx`): top navigation bar with login/logout, home, leaderboard and play
+- `MetroMap` (in `MetroMap.jsx`): renders the London Underground map using SVG
+- `Setup` (in `Setup.jsx`): setup phase before the game starts
+- `Play` (in `Play.jsx`): planning, execution and result phases
 
 ## Screenshot
 
@@ -242,5 +247,4 @@
 - username: anna, password: Verdi99!
 
 ## Use of AI Tools
-Briefly describe whether you used any AI tools (e.g., ChatGPT, GitHub Copilot, Claude) while working on this project, for which purposes (e.g., clarifying concepts, debugging, generating code), and how you verified or adapted their output.
-If you did not use any AI tools, simply state so.
+

@@ -3,8 +3,8 @@ POST http://localhost:3001/api/sessions
 Content-Type: application/json
 
 {
-  "username": "anna",
-  "password": "Verdi99!"
+  "username": "mario",
+  "password": "Marioo00"
 }
 
 ### Login (wrong password)
@@ -35,9 +35,9 @@ GET http://localhost:3001/api/leaderboard
 POST http://localhost:3001/api/games/start
 
 ### Submit game
-POST http://localhost:3001/api/games/5/submit
+POST http://localhost:3001/api/games/6/submit
 Content-Type: application/json
 
 {
-  "path": [12, 11, 10, 5, 4, 3, 14]
+  "path": [20, 19, 9, 3]
 }

@@ -1,11 +1,13 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import { Routes, Route, Navigate } from "react-router";
 import { Container } from "react-bootstrap";
-import { useState , useEffect } from 'react'
+import { useState, useEffect } from 'react'
 
 import Home from "./components/Home.jsx";
 import Login from "./components/Login.jsx";
 import Navigation from "./components/Navigation.jsx";
+import Setup from "./components/Setup.jsx";
+import Play from "./components/Play.jsx";
 
 import './App.css'
 import API from "./API/API.js";
@@ -49,6 +51,8 @@ function App() {
         <Routes>
           <Route path="/" element={<Home loggedIn={loggedIn} />} />
           <Route path="/login" element={loggedIn ? <Navigate replace to="/" /> : <Login onLogin={handleLogin} />} />
+          <Route path="/setup" element={loggedIn ?<Setup /> : <Navigate replace to="/login" />} />
+          <Route path="/play/:gameId" element={loggedIn ?<Play /> : <Navigate replace to="/login" />} />
         </Routes>
       </Container>
     </>
