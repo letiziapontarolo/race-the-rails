@@ -8,6 +8,7 @@
 - Route `/login`: login page
 - Route `/setup`: setup phase showing the complete London Underground map before starting a game
 - Route `/play/:gameId`: planning, execution and result phase of a game identified by gameId
+- Route `/leaderboard`: leaderboard showing the best score of each user
 
 ## API Server
 
@@ -235,6 +236,7 @@
 - `MetroMap` (in `MetroMap.jsx`): renders the London Underground map using SVG
 - `Setup` (in `Setup.jsx`): setup phase before the game starts
 - `Play` (in `Play.jsx`): planning, execution and result phases
+- `Leaderboard` (in `Leaderboard.jsx`): displays the leaderboard
 
 ## Screenshot
 

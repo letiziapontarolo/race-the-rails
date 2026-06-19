@@ -6,6 +6,36 @@ const db = new sqlite.Database("database.sqlite", (err) => {
     if (err) throw err;
 });
 
+const getAsync = (sql, params = []) => {
+    return new Promise((resolve, reject) => {
+        db.get(sql, params, (err, row) => {
+            if (err) reject(err);
+            else resolve(row);
+        });
+    });
+};
+
+const allAsync = (sql, params = []) => {
+    return new Promise((resolve, reject) => {
+        db.all(sql, params, (err, rows) => {
+            if (err) reject(err);
+            else resolve(rows);
+        });
+    });
+};
+
+const runAsync = (sql, params = []) => {
+    return new Promise((resolve, reject) => {
+        db.run(sql, params, function (err) {
+            if (err) reject(err);
+            else resolve({
+                lastID: this.lastID,
+                changes: this.changes
+            });
+        });
+    });
+};
+
 
 /* USERS */
 
@@ -37,21 +67,20 @@ export const getUser = (username, password) => {
 
 /* NETWORK */
 
-export const getNetwork = () => {
-    return new Promise((resolve, reject) => {
-        const stationsSql = `
+export const getNetwork = async () => {
+    const stationsSql = `
       SELECT id, name
       FROM stations
       ORDER BY name
     `;
 
-        const linesSql = `
+    const linesSql = `
       SELECT id, name, color
       FROM lines
       ORDER BY id
     `;
 
-        const lineStationsSql = `
+    const lineStationsSql = `
       SELECT 
         l.id AS lineId,
         l.name AS lineName,
@@ -65,65 +94,40 @@ export const getNetwork = () => {
       ORDER BY l.id, ls.position
     `;
 
-        const edgesSql = `
+    const edgesSql = `
       SELECT DISTINCT
         s1.id AS fromStationId,
         s1.name AS fromStationName,
         s2.id AS toStationId,
         s2.name AS toStationName
       FROM line_stations ls1
-      JOIN line_stations ls2 
-      ON ls1.line_id = ls2.line_id 
-      AND ls2.position = ls1.position + 1
+      JOIN line_stations ls2
+        ON ls1.line_id = ls2.line_id
+       AND ls2.position = ls1.position + 1
       JOIN stations s1 ON ls1.station_id = s1.id
       JOIN stations s2 ON ls2.station_id = s2.id
       ORDER BY s1.name, s2.name
     `;
 
-        db.all(stationsSql, [], (err, stations) => {
-            if (err) {
-                reject(err);
-            }
-            else {
-                db.all(linesSql, [], (err, lines) => {
-                    if (err) {
-                        reject(err);
-                    }
-                    else {
-                        db.all(lineStationsSql, [], (err, lineStations) => {
-                            if (err) {
-                                reject(err);
-                            }
-                            else {
-                                db.all(edgesSql, [], (err, edges) => {
-                                    if (err) {
-                                        reject(err);
-                                    }
-                                    else {
-                                        resolve({
-                                            stations,
-                                            lines,
-                                            lineStations,
-                                            edges
-                                        });
-                                    }
-                                });
-                            }
-                        });
-                    }
-                });
-            }
-        });
-    });
-};
+    const stations = await allAsync(stationsSql);
+    const lines = await allAsync(linesSql);
+    const lineStations = await allAsync(lineStationsSql);
+    const edges = await allAsync(edgesSql);
 
+    return {
+        stations,
+        lines,
+        lineStations,
+        edges
+    };
+};
 
 
 /* LEADERBOARD */
 
 export const getLeaderboard = () => {
-    return new Promise((resolve, reject) => {
-        const sql = `
+
+    const sql = `
       SELECT 
         u.username,
         u.name,
@@ -135,23 +139,14 @@ export const getLeaderboard = () => {
       ORDER BY bestScore DESC, u.username ASC
     `;
 
-        db.all(sql, [], (err, rows) => {
-            if (err) {
-                reject(err);
-            }
-            else {
-                resolve(rows);
-            }
-        });
-    });
+    return allAsync(sql);
 };
 
 
 /* GAMES HELPERS */
 
 const getEdges = () => {
-    return new Promise((resolve, reject) => {
-        const sql = `
+    const sql = `
       SELECT DISTINCT
         s1.id AS fromStationId,
         s2.id AS toStationId,
@@ -164,33 +159,16 @@ const getEdges = () => {
       JOIN stations s2 ON ls2.station_id = s2.id
     `;
 
-        db.all(sql, [], (err, rows) => {
-            if (err) {
-                reject(err);
-            }
-            else {
-                resolve(rows);
-            }
-        });
-    });
+    return allAsync(sql);
 };
 
 const getStations = () => {
-    return new Promise((resolve, reject) => {
-        const sql = `
+    const sql = `
       SELECT id, name
       FROM stations
     `;
 
-        db.all(sql, [], (err, rows) => {
-            if (err) {
-                reject(err);
-            }
-            else {
-                resolve(rows);
-            }
-        });
-    });
+    return allAsync(sql);
 };
 
 const buildNetwork = (stations, edges) => {
@@ -240,15 +218,15 @@ const edgeKey = (a, b) => {
 
 const validatePath = async (game, path) => {
     if (!Array.isArray(path) || path.length < 2) {
-        return { valid: false, reason: 'Path is empty or too short' };
+        return { valid: false, reason: 'Il percorso è vuoto o troppo corto.' };
     }
 
     if (path[0] !== game.start_station_id) {
-        return { valid: false, reason: 'Path does not start from the assigned station' };
+        return { valid: false, reason: 'Il percorso non inizia dalla stazione assegnata.' };
     }
 
     if (path[path.length - 1] !== game.end_station_id) {
-        return { valid: false, reason: 'Path does not end at the assigned station' };
+        return { valid: false, reason: 'Il percorso non finisce alla stazione assegnata.' };
     }
 
     const stations = await getStations();
@@ -256,13 +234,16 @@ const validatePath = async (game, path) => {
 
     for (const stationId of path) {
         if (!Number.isInteger(stationId) || !stationsId.has(stationId)) {
-            return { valid: false, reason: 'Path contains an unknown station' };
+            return { valid: false, reason: 'Il percorso contiene una stazione sconosciuta.' };
         }
     }
 
     const usedEdges = new Set();
     const validatedSteps = [];
-    const edges = await getEdges();
+    const edgeMap = new Map((await getEdges()).map((edge) => [
+        edgeKey(edge.fromStationId, edge.toStationId),
+        edge.lineId])
+    );
 
     for (let i = 0; i < path.length - 1; i++) {
         const fromStationId = path[i];
@@ -271,26 +252,22 @@ const validatePath = async (game, path) => {
         const key = edgeKey(fromStationId, toStationId);
 
         if (usedEdges.has(key)) {
-            return { valid: false, reason: 'A route segment is used more than once' };
+            return { valid: false, reason: 'Una tratta è usata più di una volta.' };
         }
 
         usedEdges.add(key);
 
-        const edge = edges.find((edge) =>
-            edgeKey(edge.fromStationId, edge.toStationId) === key
-        );
-
-        if (!edge) {
+        if (!edgeMap.has(key)) {
             return {
                 valid: false,
-                reason: 'Two consecutive stations are not directly connected'
+                reason: 'Due stazioni consecutive non sono direttamente connesse.'
             };
         }
 
         validatedSteps.push({
             fromStationId,
             toStationId,
-            lineId: edge.lineId
+            lineId: edgeMap.get(key)
         });
     }
 
@@ -301,24 +278,17 @@ const validatePath = async (game, path) => {
 };
 
 
-const getRandomEvents = () => {
-    return new Promise((resolve, reject) => {
-        const sql = 'SELECT * FROM events';
+const getEvents = () => {
+    const sql = `
+      SELECT *
+      FROM events
+    `;
 
-        db.all(sql, [], (err, rows) => {
-            if (err) {
-                reject(err);
-            }
-            else {
-                resolve(rows);
-            }
-        });
-    });
+    return allAsync(sql);
 };
 
-const insertGameStep = (gameId, stepOrder, step, event, coinsAfter) => {
-    return new Promise((resolve, reject) => {
-        const sql = `
+const insertGameStep = async (gameId, stepOrder, step, event, coinsAfter) => {
+    const sql = `
       INSERT INTO game_steps(
         game_id,
         step_order,
@@ -331,48 +301,24 @@ const insertGameStep = (gameId, stepOrder, step, event, coinsAfter) => {
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
 
-        db.run(
-            sql,
-            [
-                gameId,
-                stepOrder,
-                step.fromStationId,
-                step.toStationId,
-                step.lineId,
-                event.id,
-                coinsAfter
-            ],
-            function (err) {
-                if (err) {
-                    reject(err);
-                }
-                else {
-                    resolve(this.lastID);
-                }
-            }
-        );
-    });
+    const result = await runAsync(
+        sql,
+        [
+            gameId,
+            stepOrder,
+            step.fromStationId,
+            step.toStationId,
+            step.lineId,
+            event.id,
+            coinsAfter
+        ]
+    );
+
+    return result.lastID;
 };
 
-
-const deleteGameSteps = (gameId) => {
-    return new Promise((resolve, reject) => {
-        const sql = 'DELETE FROM game_steps WHERE game_id = ?';
-
-        db.run(sql, [gameId], function (err) {
-            if (err) {
-                reject(err);
-            }
-            else {
-                resolve(this.changes);
-            }
-        });
-    });
-};
-
-const completeGame = (gameId, finalScore) => {
-    return new Promise((resolve, reject) => {
-        const sql = `
+const completeGame = async (gameId, finalScore) => {
+    const sql = `
       UPDATE games
       SET final_score = ?,
           status = 'completed',
@@ -380,35 +326,20 @@ const completeGame = (gameId, finalScore) => {
       WHERE id = ?
     `;
 
-        db.run(sql, [finalScore, gameId], function (err) {
-            if (err) {
-                reject(err);
-            }
-            else {
-                resolve(this.changes);
-            }
-        });
-    });
+    const result = await runAsync(sql, [finalScore, gameId]);
+
+    return result.changes;
 };
 
 const getGame = (gameId, userId) => {
-    return new Promise((resolve, reject) => {
-        const sql = `
+    const sql = `
       SELECT *,
       (strftime('%s','now','localtime') - strftime('%s', started_at)) AS seconds
       FROM games
       WHERE id = ? AND user_id = ?
     `;
 
-        db.get(sql, [gameId, userId], (err, row) => {
-            if (err) {
-                reject(err);
-            }
-            else {
-                resolve(row);
-            }
-        });
-    });
+    return getAsync(sql, [gameId, userId]);
 };
 
 /* GAMES */
@@ -437,39 +368,35 @@ export const startGame = async (userId) => {
         }
     }
 
+    if (possiblePairs.length === 0) {
+        throw new Error("Nessuna coppia di stazioni disponibile.");
+    }
+
     const pair = possiblePairs[Math.floor(Math.random() * possiblePairs.length)];
 
-    return new Promise((resolve, reject) => {
-        const sql = `
+    const sql = `
       INSERT INTO games(user_id, start_station_id, end_station_id, initial_coins, status, started_at)
       VALUES (?, ?, ?, 20, 'planning', datetime('now', 'localtime'))
     `;
 
-        db.run(
-            sql,
-            [userId, pair.startStationId, pair.endStationId],
-            function (err) {
-                if (err) {
-                    reject(err);
-                }
-                else {
-                    resolve({
-                        id: this.lastID,
-                        startStation: {
-                            id: pair.startStationId,
-                            name: pair.startStationName
-                        },
-                        endStation: {
-                            id: pair.endStationId,
-                            name: pair.endStationName
-                        },
-                        initialCoins: 20,
-                        planningSeconds: 90
-                    });
-                }
-            }
-        );
-    });
+    const result = await runAsync(
+        sql,
+        [userId, pair.startStationId, pair.endStationId]
+    );
+
+    return {
+        id: result.lastID,
+        startStation: {
+            id: pair.startStationId,
+            name: pair.startStationName
+        },
+        endStation: {
+            id: pair.endStationId,
+            name: pair.endStationName
+        },
+        initialCoins: 20,
+        planningSeconds: 90
+    };
 };
 
 
@@ -489,15 +416,13 @@ export const submitGame = async (gameId, userId, path) => {
 
         return {
             valid: false,
-            reason: 'Time expired',
+            reason: 'Tempo scaduto.',
             finalScore: 0,
             steps: []
         };
     }
 
     const validation = await validatePath(game, path);
-
-    await deleteGameSteps(gameId);
 
     if (!validation.valid) {
         await completeGame(gameId, 0);
@@ -510,7 +435,7 @@ export const submitGame = async (gameId, userId, path) => {
         };
     }
 
-    const events = await getRandomEvents();
+    const events = await getEvents();
     let coins = 20;
     const resultSteps = [];
 

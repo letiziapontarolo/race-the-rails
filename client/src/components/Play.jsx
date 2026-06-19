@@ -50,13 +50,13 @@ function Play() {
 
       if (remaining <= 0) {
         clearInterval(timer);
-        submitPath();
+        submitPath(selectedPath);
       }
     }, 250);
 
     return () => clearInterval(timer);
 
-  }, [game, submitted, endTime]);
+  }, [game, submitted, endTime, selectedPath]);
 
   const stationById = useMemo(() => {
     const map = new Map();
@@ -118,7 +118,7 @@ function Play() {
     setUsedEdges([]);
   }
 
-  async function submitPath() {
+  async function submitPath(pathToSubmit = selectedPath) {
     if (submitted) return;
 
     setSubmitted(true);
