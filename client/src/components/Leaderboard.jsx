@@ -3,57 +3,46 @@ import { Alert, Table } from 'react-bootstrap';
 
 import API from '../API/API.js';
 
-function Leaderboard(props) {
+function Leaderboard() {
     const [leaderboard, setLeaderboard] = useState([]);
     const [error, setError] = useState('');
 
     useEffect(() => {
-        if (props.loggedIn) {
-            API.getLeaderboard()
-                .then(setLeaderboard)
-                .catch(() => setError('Errore nel caricamento della classifica.'));
-        }
-    }, [props.loggedIn]);
+        API.getLeaderboard()
+            .then(setLeaderboard)
+            .catch(() => setError('Errore nel caricamento della classifica.'));
+    }, []);
 
     return (
         <>
             <h1>Classifica generale</h1>
 
-            {!props.loggedIn ? (
-                <Alert variant="warning">
-                    Gli utenti anonimi possono vedere solo le istruzioni.
-                    Per vedere la classifica devi fare login.
-                </Alert>
-            ) : (
-                <>
-                    {error && <Alert variant="danger">{error}</Alert>}
+            {error && <Alert variant="danger">{error}</Alert>}
 
-                    {leaderboard.length === 0 && !error && (
-                        <Alert variant="info">Nessuna partita completata.</Alert>
-                    )}
-
-                    <Table striped bordered>
-                        <thead>
-                            <tr>
-                                <th>Posizione</th>
-                                <th>Giocatore</th>
-                                <th>Username</th>
-                                <th>Miglior punteggio</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {leaderboard.map((row, index) => (
-                                <tr key={row.username}>
-                                    <td>{index + 1}</td>
-                                    <td>{row.name}</td>
-                                    <td>{row.username}</td>
-                                    <td>{row.bestScore}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </Table>
-                </>
+            {leaderboard.length === 0 && !error && (
+                <Alert variant="info">Nessuna partita completata.</Alert>
             )}
+
+            <Table striped bordered>
+                <thead>
+                    <tr>
+                        <th>Posizione</th>
+                        <th>Giocatore</th>
+                        <th>Username</th>
+                        <th>Miglior punteggio</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {leaderboard.map((row, index) => (
+                        <tr key={row.username}>
+                            <td>{index + 1}</td>
+                            <td>{row.name}</td>
+                            <td>{row.username}</td>
+                            <td>{row.bestScore}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </Table>
         </>
     );
 }

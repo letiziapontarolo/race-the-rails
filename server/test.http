@@ -22,11 +22,11 @@ GET http://localhost:3001/api/sessions/current
 ### Logout
 DELETE http://localhost:3001/api/sessions/current
 
-### Network
-GET http://localhost:3001/api/network
+### Setup Network
+GET http://localhost:3001/api/network/setup
 
-### Planning network
-GET http://localhost:3001/api/network/planning
+### Play Network
+GET http://localhost:3001/api/network/play
 
 ### Leaderboard
 GET http://localhost:3001/api/leaderboard
@@ -35,9 +35,9 @@ GET http://localhost:3001/api/leaderboard
 POST http://localhost:3001/api/games/start
 
 ### Submit game
-POST http://localhost:3001/api/games/6/submit
+POST http://localhost:3001/api/games/51/submit
 Content-Type: application/json
 
 {
-  "path": [20, 19, 9, 3]
+  "path": [22, 12, 3, 11]
 }

@@ -5,6 +5,8 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router';
 import API from '../API/API.js';
 import MetroMap from './MetroMap.jsx';
 
+
+// Converte una tratta in una stringa del tipo "Paddington ↔ Marylebone"
 function edgeLabel(edge) {
   return `${edge.fromStationName} ↔ ${edge.toStationName}`;
 }
@@ -23,8 +25,11 @@ function Play() {
   const [submitted, setSubmitted] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
+  const [addedStationsCount, setAddedStationsCount] = useState([]);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
 
+
+  // Carica la rete di gioco e inizializza il tempo di fine della partita
   useEffect(() => {
     if (!game) {
       navigate('/setup', { replace: true });
@@ -38,11 +43,14 @@ function Play() {
       .catch(() => setError('Errore nel caricamento della partita.'));
   }, [game, navigate]);
 
+
+  // Aggiorna il timer e invia automaticamente il percorso allo scadere del tempo
   useEffect(() => {
     if (!game || submitted || !endTime) return;
 
     const timer = setInterval(() => {
 
+      // Calcola quanti secondi mancano
       const remaining = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
 
       setSecondsLeft(remaining);
@@ -57,6 +65,8 @@ function Play() {
 
   }, [game, submitted, endTime, selectedPath]);
 
+
+  // Restituisce il nome di una stazione a partire dal suo id
   function getStationName(stationId) {
     const station = network.stations.find((station) => station.id === stationId);
     if (station) {
@@ -66,21 +76,33 @@ function Play() {
     }
   }
 
+
+  // Genera una chiave unica per identificare una tratta (es: "1-2")
   function getEdgeKey(a, b) {
     return Math.min(a, b) + "-" + Math.max(a, b);
   }
 
+
+  // Controlla se una tratta non è ancora stata usata
   function isEdgeUsable(edge) {
-    return !usedEdges.includes(getEdgeKey(edge.fromStationId, edge.toStationId));
+    return !usedEdges.some((usedEdge) =>
+      getEdgeKey(usedEdge.fromStationId, usedEdge.toStationId) ===
+      getEdgeKey(edge.fromStationId, edge.toStationId)
+    );
   }
 
+
+  // Aggiunge una tratta al percorso selezionato
   function selectEdge(edge) {
     if (submitted) return;
     if (!isEdgeUsable(edge)) return;
 
     let newStations;
 
+    // Prima tratta selezionata
     if (selectedPath.length === 0) {
+
+      //Decide quale stazione della tratta mettere per prima
       if (edge.fromStationId === game.startStation.id) {
         newStations = [edge.fromStationId, edge.toStationId];
       }
@@ -90,50 +112,68 @@ function Play() {
       else {
         newStations = [edge.fromStationId, edge.toStationId];
       }
-    } else {
-      const currentStationId = selectedPath[selectedPath.length - 1];
-
-      let nextStationId;
-
-      if (edge.fromStationId === currentStationId) {
-        nextStationId = edge.toStationId;
-      } else if (edge.toStationId === currentStationId) {
-        nextStationId = edge.fromStationId;
-      } else {
-        nextStationId = edge.fromStationId;
-      }
-
-      newStations = [...selectedPath, nextStationId];
     }
 
+    // Tratte successive
+    else {
+      const currentStationId = selectedPath[selectedPath.length - 1];
+
+      //Decide quale stazione della tratta mettere per prima
+      if (edge.fromStationId === currentStationId) {
+        newStations = [...selectedPath, edge.toStationId];
+      } else if (edge.toStationId === currentStationId) {
+        newStations = [...selectedPath, edge.fromStationId];
+      } else {
+        if (edge.fromStationId === game.endStation.id) {
+          newStations = [...selectedPath, edge.toStationId, edge.fromStationId];
+        } else {
+          newStations = [...selectedPath, edge.fromStationId, edge.toStationId];
+        }
+      }
+    }
+
+    const count = newStations.length - selectedPath.length;
+
+    // Salva la tratta nel percorso
     setSelectedPath(newStations);
 
-    setUsedEdges((oldEdges) => [
-      ...oldEdges,
-      getEdgeKey(edge.fromStationId, edge.toStationId)
+    // Salva la tratta tra quelle già utilizzate
+    setUsedEdges((oldEdges) => [...oldEdges, edge]);
+
+    // Salva quante stazioni sono state aggiunte da questa tratta
+    // (1 se collegata alla precedente, 2 se è la prima o se è scollegata)
+    setAddedStationsCount((oldCounts) => [
+      ...oldCounts,
+      count
     ]);
+
   }
 
+
+  // Rimuove l'ultima tratta inserita nel percorso
   function removeLastEdge() {
     if (submitted) return;
     if (usedEdges.length === 0) return;
 
-    if (selectedPath.length === 2) {
-      setSelectedPath([]);
-    } else {
-      setSelectedPath((oldPath) => oldPath.slice(0, -1));
-    }
+    const lastCount = addedStationsCount[addedStationsCount.length - 1];
 
+    setSelectedPath((oldPath) => oldPath.slice(0, -lastCount));
     setUsedEdges((oldEdges) => oldEdges.slice(0, -1));
+    setAddedStationsCount((oldCounts) => oldCounts.slice(0, -1));
   }
 
+
+  // Cancella completamente il percorso selezionato
   function clearPath() {
     if (submitted) return;
 
     setSelectedPath([]);
     setUsedEdges([]);
+    setAddedStationsCount([]);
   }
 
+
+  // Invia il percorso al server per la validazione
   async function submitPath(pathToSubmit) {
     if (submitted) return;
 
@@ -161,9 +201,11 @@ function Play() {
   let currentStep = null;
   let executionCompleted = false;
 
+  // Recupera lo step attualmente visualizzato
   if (result && result.valid && result.steps.length > 0) {
     currentStep = result.steps[currentStepIndex];
 
+    // Verifica se è stato raggiunto l'ultimo step
     if (currentStepIndex >= result.steps.length - 1) {
       executionCompleted = true;
     }
@@ -216,12 +258,12 @@ function Play() {
           </Card>
 
           <Row>
-            <Col md={7}>
+            <Col md={8}>
               <Card className="mb-3">
                 <Card.Body>
                   <Card.Title>Tratte disponibili</Card.Title>
 
-                  <ListGroup>
+                  <ListGroup className="edges-list">
                     {network.edges.map((edge) => {
                       const usable = isEdgeUsable(edge);
 
@@ -246,15 +288,15 @@ function Play() {
               </Card>
             </Col>
 
-            <Col md={5}>
+            <Col md={4}>
               <Card className="mb-3">
                 <Card.Body>
                   <Card.Title>Percorso selezionato</Card.Title>
 
                   <ol>
-                    {selectedPath.map((stationId, index) => (
-                      <li key={`${stationId}-${index}`}>
-                        {getStationName(stationId)}
+                    {usedEdges.map((edge, index) => (
+                      <li key={`${getEdgeKey(edge.fromStationId, edge.toStationId)}-${index}`}>
+                        {edgeLabel(edge)}
                       </li>
                     ))}
                   </ol>
@@ -275,7 +317,7 @@ function Play() {
                     variant="danger"
                     className="mt-2"
                     onClick={clearPath}
-                    disabled={submitted || selectedPath.length <= 1}
+                    disabled={submitted || usedEdges.length === 0}
                   >
                     Cancella percorso
                   </Button>
@@ -291,15 +333,15 @@ function Play() {
           <Card.Body>
             <Card.Title>Risultato</Card.Title>
 
-            {result.valid ? (
+            {result.valid && currentStepIndex === 0 ? (
               <Alert variant="success">
                 Percorso valido! Esecuzione del viaggio iniziata.
               </Alert>
-            ) : (
+            ) : !result.valid ? (
               <Alert variant="danger">
-                Percorso non valido! {result.reason}. Punteggio finale: <strong>0</strong> <i className="bi bi-coin"></i>
+                Percorso non valido! {result.reason} Punteggio finale: <strong>0</strong> <i className="bi bi-coin"></i>
               </Alert>
-            )}
+            ) : null}
 
             {result.valid && currentStep && (
               <>

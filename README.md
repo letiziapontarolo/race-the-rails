@@ -262,7 +262,12 @@
 
 ## Screenshot
 
-![Screenshot](./img/screenshot.jpg)
+- Leaderboard  
+  ![Leaderboard](leaderboard.png)
+
+- During a game  
+  ![Game](game1.png)
+  ![Game](game2.png)
 
 ## Users Credentials
 
@@ -272,4 +277,4 @@
 
 ## Use of AI Tools
 
-ChatGPT was used to help design the London metro network (selection of lines, stations, and interchange stations) and to assist in creating the SVG map layout.
+ChatGPT was used to help design the London metro network (selection of lines, stations, and interchange stations) and to assist in creating the SVG map layout and to perform code reviews aimed at checking the consistency of the implementation with the project specifications.

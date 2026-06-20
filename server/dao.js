@@ -2,10 +2,13 @@ import sqlite from "sqlite3";
 import crypto from "crypto";
 
 
+// Apertura del database
 const db = new sqlite.Database("database.sqlite", (err) => {
     if (err) throw err;
 });
 
+
+// Funzioni helper per le Promise
 const getAsync = (sql, params = []) => {
     return new Promise((resolve, reject) => {
         db.get(sql, params, (err, row) => {
@@ -37,7 +40,7 @@ const runAsync = (sql, params = []) => {
 };
 
 
-/* USERS */
+// USERS
 
 export const getUser = (username, password) => {
     return new Promise((resolve, reject) => {
@@ -65,7 +68,7 @@ export const getUser = (username, password) => {
 };
 
 
-/* NETWORK */
+// NETWORK
 
 export const getSetupNetwork = async () => {
     const stationsSql = `
@@ -159,6 +162,7 @@ export const getLeaderboard = () => {
 
 /* GAMES HELPERS */
 
+// Recupera tutte le tratte tra stazioni adiacenti
 const getEdges = () => {
     const sql = `
       SELECT DISTINCT
@@ -176,6 +180,7 @@ const getEdges = () => {
     return allAsync(sql);
 };
 
+// Recupera tutte le stazioni
 const getStations = () => {
     const sql = `
       SELECT *
@@ -185,6 +190,11 @@ const getStations = () => {
     return allAsync(sql);
 };
 
+// Costruisce una mappa che rappresenta il grafo della rete (stazioni=vertici, tratte=archi) del tipo:
+// Map {
+//     1 => [2],
+//     2 => [1, 3]
+// }
 const buildMap = (stations, edges) => {
     const map = new Map();
 
@@ -200,17 +210,26 @@ const buildMap = (stations, edges) => {
     return map;
 };
 
+// Calcola la distanza minima tra due stazioni tramite Breadth-First Search
 const shortestDistance = (map, startId, endId) => {
+
+    // Crea la coda con la prima stazione
     const queue = [{ id: startId, distance: 0 }];
+
+    // Crea il set delle stazioni già visitate, inizialmente con solo la stazione di partenza
     const visited = new Set([startId]);
 
     while (queue.length > 0) {
+
+        // Rimuove il primo elemento della coda e lo salva in current
         const current = queue.shift();
 
+        // Se current è la stazione di arrivo, restituisce la distanza trovata
         if (current.id === endId) {
             return current.distance;
         }
 
+        // Aggiunge alla coda ogni vicino non ancora visitato con distanza current + 1
         for (const next of map.get(current.id)) {
             if (!visited.has(next)) {
                 visited.add(next);
@@ -222,9 +241,11 @@ const shortestDistance = (map, startId, endId) => {
         }
     }
 
+    // Se non esiste un percorso tra le due stazioni
     return Infinity;
 };
 
+// Genera tutte le possibili coppie stazionePartenza-stazioneArrivo con distanza minima 3
 const getPossiblePairs = (stations, map) => {
     const possiblePairs = [];
 
@@ -248,14 +269,17 @@ const getPossiblePairs = (stations, map) => {
     return possiblePairs;
 };
 
+// Restituisce un elemento casuale di un array
 const randomElement = (array) => {
     return array[Math.floor(Math.random() * array.length)];
 };
 
+// Genera una chiave unica per identificare una tratta (es: "1-2")
 const getEdgeKey = (a, b) => {
     return Math.min(a, b) + "-" + Math.max(a, b);
 };
 
+// Controlla che il percorso inviato sia valido
 const validatePath = async (game, path) => {
 
     if (!Array.isArray(path) || path.length < 2) {
@@ -270,6 +294,7 @@ const validatePath = async (game, path) => {
         return { valid: false, reason: 'Il percorso non finisce alla stazione assegnata.' };
     }
 
+    // Costruisce un set con tutti gli id delle stazioni
     const stationsId = new Set((await getStations()).map((station) => station.id));
 
     for (const stationId of path) {
@@ -278,14 +303,19 @@ const validatePath = async (game, path) => {
         }
     }
 
+    // Costruisce un set per le tratte già usate
     const usedEdges = new Set();
+
+    // Costruisce un array per gli step verificati
     const validatedSteps = [];
 
+    // Costruisce una mappa con chiave = tratta (getEdgeKey) e valore = linea che collega la tratta (lineId)
     const edgeMap = new Map((await getEdges()).map((edge) => [
         getEdgeKey(edge.fromStationId, edge.toStationId),
         edge.lineId])
     );
 
+    // Scorre ogni tratta del path
     for (let i = 0; i < path.length - 1; i++) {
         const fromStationId = path[i];
         const toStationId = path[i + 1];
@@ -301,10 +331,11 @@ const validatePath = async (game, path) => {
         if (!edgeMap.has(edgeKey)) {
             return {
                 valid: false,
-                reason: 'Due stazioni consecutive non sono direttamente connesse.'
+                reason: 'Due stazioni non sono direttamente connesse.'
             };
         }
 
+        // Aggiunge la tratta all'array di step verificati
         validatedSteps.push({
             fromStationId,
             toStationId,
@@ -318,6 +349,7 @@ const validatePath = async (game, path) => {
     };
 };
 
+// Recupera tutti gli eventi disponibili
 const getEvents = () => {
     const sql = `
       SELECT *
@@ -327,6 +359,7 @@ const getEvents = () => {
     return allAsync(sql);
 };
 
+// Inserisce uno step della partita nel database
 const insertGameStep = async (gameId, stepOrder, step, event, coinsAfter) => {
     const sql = `
       INSERT INTO game_steps(
@@ -357,6 +390,7 @@ const insertGameStep = async (gameId, stepOrder, step, event, coinsAfter) => {
     return result.lastID;
 };
 
+// Aggiorna il punteggio finale e termina la partita
 const completeGame = async (gameId, finalScore) => {
     const sql = `
       UPDATE games
@@ -371,6 +405,7 @@ const completeGame = async (gameId, finalScore) => {
     return result.changes;
 };
 
+// Recupera una partita e calcola quanti secondi sono trascorsi dall'inizio
 const getGame = (gameId, userId) => {
     const sql = `
       SELECT *,
@@ -433,7 +468,7 @@ export const submitGame = async (gameId, userId, path) => {
         return { alreadyCompleted: true };
     }
 
-    if (game.seconds >= 90) {
+    if (game.seconds > 90) {
         await completeGame(gameId, 0);
 
         return {

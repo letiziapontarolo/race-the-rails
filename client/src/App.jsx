@@ -55,7 +55,7 @@ function App() {
           <Route path="/login" element={loggedIn ? <Navigate replace to="/" /> : <Login handleLogin={handleLogin} />} />
           <Route path="/setup" element={loggedIn ? <Setup /> : <Navigate replace to="/login" />} />
           <Route path="/play/:gameId" element={loggedIn ? <Play /> : <Navigate replace to="/login" />} />
-          <Route path="/leaderboard" element={<Leaderboard loggedIn={loggedIn} />} />
+          <Route path="/leaderboard" element={loggedIn ? <Leaderboard /> : <Navigate replace to="/login" />} />
           <Route path="*" element={<Navigate replace to="/" />} />
         </Routes>
       </Container>

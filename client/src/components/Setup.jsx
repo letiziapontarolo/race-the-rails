@@ -36,8 +36,8 @@ function Setup() {
       <h1>Mappa completa</h1>
 
       <p className="mb-3">
-        Studia la mappa completa della rete. Quando sei pronto, inizia la partita:
-        nella fase successiva le linee spariranno e avrai 90 secondi.
+        Studia la mappa della rete. Quando sei pronto, inizia la partita:
+        nella fase successiva le linee spariranno e avrai 90 secondi per completare il percorso.
       </p>
 
       {error && <Alert variant="danger">{error}</Alert>}
