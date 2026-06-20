@@ -2,56 +2,74 @@ const SERVER_URL = "http://localhost:3001";
 
 // POST /api/sessions
 const logIn = async (credentials) => {
-    const response = await fetch(SERVER_URL + "/api/sessions", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(credentials),
-    });
-    if (response.ok) {
-        const user = await response.json();
-        return user;
-    }
-    else {
-        const errDetails = response.headers.get("WWW-Authenticate");
-        throw errDetails;
-    }
+  const response = await fetch(SERVER_URL + "/api/sessions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify(credentials),
+  });
+  if (response.ok) {
+    const user = await response.json();
+    return user;
+  }
+  else {
+    const errDetails = response.headers.get("WWW-Authenticate");
+    throw errDetails;
+  }
 };
 
 // GET /api/sessions/current
 const getUserInfo = async () => {
-    const response = await fetch(SERVER_URL + "/api/sessions/current", {
-        credentials: "include",
-    });
-    const user = await response.json();
-    if (response.ok) {
-        return user;
-    } else {
-        throw user.error;
-    }
+  const response = await fetch(SERVER_URL + "/api/sessions/current", {
+    credentials: "include",
+  });
+  const user = await response.json();
+  if (response.ok) {
+    return user;
+  } else {
+    throw user.error;
+  }
 };
 
 // DELETE /api/sessions/current
 const logOut = async () => {
-    const response = await fetch(SERVER_URL + "/api/sessions/current", {
-        method: "DELETE",
-        credentials: "include"
-    });
-    if (response.ok)
-        return null;
+  const response = await fetch(SERVER_URL + "/api/sessions/current", {
+    method: "DELETE",
+    credentials: "include"
+  });
+  if (response.ok)
+    return null;
+  else {
+    throw new Error("Internal server error");
+  }
 }
 
-// GET /api/network
-const getNetwork = async () => {
-  const response = await fetch(`${SERVER_URL}/api/network`, {
+// GET /api/network/setup
+const getSetupNetwork = async () => {
+  const response = await fetch(`${SERVER_URL}/api/network/setup`, {
     credentials: 'include'
   });
 
   if (response.ok) {
-    const network = await response.json();
-    return network;
+    const setupNetwork = await response.json();
+    return setupNetwork;
+  }
+  else {
+    throw new Error("Internal server error");
+  }
+};
+
+// GET /api/network/play
+const getPlayNetwork = async () => {
+  const response = await fetch(`${SERVER_URL}/api/network/play`, {
+    credentials: 'include'
+  });
+
+  if (response.ok) {
+    const playNetwork = await response.json();
+    return playNetwork;
   }
   else {
     throw new Error("Internal server error");
@@ -120,5 +138,5 @@ const submitGame = async (gameId, path) => {
 };
 
 
-const API = { logIn, getUserInfo, logOut, getNetwork, getLeaderboard, startGame, submitGame };
+const API = { logIn, getUserInfo, logOut, getSetupNetwork, getPlayNetwork, getLeaderboard, startGame, submitGame };
 export default API;

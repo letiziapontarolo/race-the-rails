@@ -34,9 +34,15 @@ function Home(props) {
                     </Button>
                 </>
             ) : (
-                <Alert variant="warning">
-                    Gli utenti anonimi possono vedere solo le istruzioni. Per giocare devi fare login.
-                </Alert>
+                <>
+                    <Alert variant="warning">
+                        Gli utenti anonimi possono vedere solo le istruzioni. Per giocare devi fare login.
+                    </Alert>
+
+                    <Button as={Link} to="/login">
+                        Login
+                    </Button>
+                </>
             )}
 
 

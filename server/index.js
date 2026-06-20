@@ -1,7 +1,7 @@
 // imports
 import express from "express";
 import morgan from "morgan";
-import { getUser, getNetwork, getLeaderboard, startGame, submitGame } from './dao.js';
+import { getUser,  getSetupNetwork, getPlayNetwork, getLeaderboard, startGame, submitGame } from './dao.js';
 import { check, validationResult } from "express-validator";
 
 import passport from 'passport';
@@ -79,17 +79,27 @@ app.get("/api/sessions/current", (req, res) => {
     res.status(401).json({error: "Not authenticated"});
 });
 
-// DELETE /api/session/current
+// DELETE /api/sessions/current
 app.delete("/api/sessions/current", (req, res) => {
   req.logout(() => {
     res.end();
   });
 });
 
-// GET /api/network
-app.get('/api/network', isLoggedIn, async (req, res) => {
+// GET /api/network/setup
+app.get('/api/network/setup', isLoggedIn, async (req, res) => {
   try {
-    const network = await getNetwork();
+    const network = await getSetupNetwork();
+    res.json(network);
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/network/play
+app.get('/api/network/play', isLoggedIn, async (req, res) => {
+  try {
+    const network = await getPlayNetwork();
     res.json(network);
   } catch (err) {
     res.status(500).json({ error: 'Internal server error' });
@@ -118,7 +128,8 @@ app.post('/api/games/start', isLoggedIn, async (req, res) => {
 
 // POST /api/games/:id/submit
 app.post('/api/games/:id/submit', isLoggedIn, [
-  check('path').isArray({ min: 1 }),
+  check('id').isInt({ min: 1 }).toInt(),
+  check('path').isArray(),
   check('path.*').isInt({ min: 1 }).toInt()
   ], async (req, res) => {
   

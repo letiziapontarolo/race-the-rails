@@ -1,21 +1,11 @@
 import { Navbar, Nav, Container, Button } from 'react-bootstrap';
-import { Link, useNavigate } from 'react-router';
+import { Link } from 'react-router';
 
 function Navigation(props) {
-  const navigate = useNavigate();
-
-  async function doLogout() {
-    await props.onLogout();
-    navigate('/');
-  }
 
   return (
-    <Navbar bg="dark" variant="dark" expand="lg">
+    <Navbar bg="dark" data-bs-theme="dark">
       <Container>
-
-        <Navbar.Toggle aria-controls="main-navbar" />
-
-        <Navbar.Collapse id="main-navbar">
           <Nav className="me-auto">
             <Nav.Link as={Link} to="/">
               Home <i className="bi bi-house-door"></i>
@@ -39,7 +29,7 @@ function Navigation(props) {
                 <Navbar.Text className="me-3">
                   <i className="bi bi-person-circle me-1"></i> {props.user.name}
                 </Navbar.Text>
-                <Button variant="outline-light" onClick={doLogout}>
+                <Button variant="outline-light" onClick={props.handleLogout}>
                   Logout
                 </Button>
               </>
@@ -49,7 +39,6 @@ function Navigation(props) {
               </Button>
             )}
           </Nav>
-        </Navbar.Collapse>
       </Container>
     </Navbar>
   );

@@ -13,7 +13,7 @@ function Setup() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    API.getNetwork()
+    API.getSetupNetwork()
       .then(setNetwork)
       .catch(() => setError('Errore nel caricamento della rete.'));
   }, []);
@@ -33,6 +33,7 @@ function Setup() {
 
   return (
     <>
+      <h1>Mappa completa</h1>
 
       <p className="mb-3">
         Studia la mappa completa della rete. Quando sei pronto, inizia la partita:

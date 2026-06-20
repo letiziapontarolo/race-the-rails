@@ -53,11 +53,11 @@
   - Response: `200 OK` (success)
   - Response body: none
 
-- GET `/api/network`    
-  - Description: returns all stations, all metro lines, the association between stations and lines (including their order on each line) and all directly connected station pairs
+- GET `/api/network/setup`    
+  - Description: returns all stations, all metro lines and the association between stations and lines (including their order on each line)
   - Request body: none
   - Response: `200 OK` (success), `401 Unauthorized` (failure, not authenticated) or `500 Internal Server Error` (failure)
-  - Response body: a JSON object representing the network
+  - Response body: a JSON object representing the network used during the setup phase
 
     ```
     {
@@ -103,6 +103,28 @@
           "position": 2
         },
         ...
+      ]
+    }
+    ```
+
+- GET `/api/network/play`    
+  - Description: returns all stations and all directly connected station pairs
+  - Request body: none
+  - Response: `200 OK` (success), `401 Unauthorized` (failure, not authenticated) or `500 Internal Server Error` (failure)
+  - Response body: a JSON object representing the data required during the game
+
+    ```
+    {
+      "stations": [
+        {
+          "id": 3,
+          "name": "Baker Street"
+        },
+        {
+          "id": 18,
+          "name": "Barbican"
+        },
+        ...
       ],
       "edges": [
         {
@@ -120,7 +142,7 @@
         ...
       ]
     }
-    ```
+    ```  
 
 - GET `/api/leaderboard`    
   - Description: returns the best score of each registered user
@@ -250,3 +272,4 @@
 
 ## Use of AI Tools
 
+ChatGPT was used to help design the London metro network (selection of lines, stations, and interchange stations) and to assist in creating the SVG map layout.

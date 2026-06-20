@@ -1,21 +1,17 @@
 import { useState } from 'react';
 import { Alert, Button, Card, Form } from 'react-bootstrap';
-import { useNavigate } from 'react-router';
 
 function Login(props) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const navigate = useNavigate();
-
   async function handleSubmit(event) {
     event.preventDefault();
     setError('');
 
     try {
-      await props.onLogin({ username, password });
-      navigate('/');
+      await props.handleLogin({ username, password });
     } catch {
       setError('Username o password non validi.');
     }

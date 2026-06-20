@@ -67,7 +67,7 @@ export const getUser = (username, password) => {
 
 /* NETWORK */
 
-export const getNetwork = async () => {
+export const getSetupNetwork = async () => {
     const stationsSql = `
       SELECT id, name
       FROM stations
@@ -94,6 +94,24 @@ export const getNetwork = async () => {
       ORDER BY l.id, ls.position
     `;
 
+    const stations = await allAsync(stationsSql);
+    const lines = await allAsync(linesSql);
+    const lineStations = await allAsync(lineStationsSql);
+
+    return {
+        stations,
+        lines,
+        lineStations
+    };
+};
+
+export const getPlayNetwork = async () => {
+    const stationsSql = `
+      SELECT id, name
+      FROM stations
+      ORDER BY name
+    `;
+
     const edgesSql = `
       SELECT DISTINCT
         s1.id AS fromStationId,
@@ -110,14 +128,10 @@ export const getNetwork = async () => {
     `;
 
     const stations = await allAsync(stationsSql);
-    const lines = await allAsync(linesSql);
-    const lineStations = await allAsync(lineStationsSql);
     const edges = await allAsync(edgesSql);
 
     return {
         stations,
-        lines,
-        lineStations,
         edges
     };
 };
@@ -164,14 +178,14 @@ const getEdges = () => {
 
 const getStations = () => {
     const sql = `
-      SELECT id, name
+      SELECT *
       FROM stations
     `;
 
     return allAsync(sql);
 };
 
-const buildNetwork = (stations, edges) => {
+const buildMap = (stations, edges) => {
     const map = new Map();
 
     for (const station of stations) {
@@ -211,12 +225,39 @@ const shortestDistance = (map, startId, endId) => {
     return Infinity;
 };
 
+const getPossiblePairs = (stations, map) => {
+    const possiblePairs = [];
 
-const edgeKey = (a, b) => {
-    return [Math.min(a, b), Math.max(a, b)].join('-');
+    for (const start of stations) {
+        for (const end of stations) {
+            if (start.id !== end.id) {
+                const distance = shortestDistance(map, start.id, end.id);
+
+                if (distance >= 3 && distance !== Infinity) {
+                    possiblePairs.push({
+                        startStationId: start.id,
+                        startStationName: start.name,
+                        endStationId: end.id,
+                        endStationName: end.name
+                    });
+                }
+            }
+        }
+    }
+
+    return possiblePairs;
+};
+
+const randomElement = (array) => {
+    return array[Math.floor(Math.random() * array.length)];
+};
+
+const getEdgeKey = (a, b) => {
+    return Math.min(a, b) + "-" + Math.max(a, b);
 };
 
 const validatePath = async (game, path) => {
+
     if (!Array.isArray(path) || path.length < 2) {
         return { valid: false, reason: 'Il percorso è vuoto o troppo corto.' };
     }
@@ -229,8 +270,7 @@ const validatePath = async (game, path) => {
         return { valid: false, reason: 'Il percorso non finisce alla stazione assegnata.' };
     }
 
-    const stations = await getStations();
-    const stationsId = new Set(stations.map((station) => station.id));
+    const stationsId = new Set((await getStations()).map((station) => station.id));
 
     for (const stationId of path) {
         if (!Number.isInteger(stationId) || !stationsId.has(stationId)) {
@@ -240,8 +280,9 @@ const validatePath = async (game, path) => {
 
     const usedEdges = new Set();
     const validatedSteps = [];
+
     const edgeMap = new Map((await getEdges()).map((edge) => [
-        edgeKey(edge.fromStationId, edge.toStationId),
+        getEdgeKey(edge.fromStationId, edge.toStationId),
         edge.lineId])
     );
 
@@ -249,15 +290,15 @@ const validatePath = async (game, path) => {
         const fromStationId = path[i];
         const toStationId = path[i + 1];
 
-        const key = edgeKey(fromStationId, toStationId);
+        const edgeKey = getEdgeKey(fromStationId, toStationId);
 
-        if (usedEdges.has(key)) {
+        if (usedEdges.has(edgeKey)) {
             return { valid: false, reason: 'Una tratta è usata più di una volta.' };
         }
 
-        usedEdges.add(key);
+        usedEdges.add(edgeKey);
 
-        if (!edgeMap.has(key)) {
+        if (!edgeMap.has(edgeKey)) {
             return {
                 valid: false,
                 reason: 'Due stazioni consecutive non sono direttamente connesse.'
@@ -267,7 +308,7 @@ const validatePath = async (game, path) => {
         validatedSteps.push({
             fromStationId,
             toStationId,
-            lineId: edgeMap.get(key)
+            lineId: edgeMap.get(edgeKey)
         });
     }
 
@@ -276,7 +317,6 @@ const validatePath = async (game, path) => {
         steps: validatedSteps
     };
 };
-
 
 const getEvents = () => {
     const sql = `
@@ -347,32 +387,15 @@ const getGame = (gameId, userId) => {
 export const startGame = async (userId) => {
     const stations = await getStations();
     const edges = await getEdges();
-    const map = buildNetwork(stations, edges);
+    const map = buildMap(stations, edges);
 
-    const possiblePairs = [];
-
-    for (const start of stations) {
-        for (const end of stations) {
-            if (start.id !== end.id) {
-                const distance = shortestDistance(map, start.id, end.id);
-
-                if (distance >= 3 && distance !== Infinity) {
-                    possiblePairs.push({
-                        startStationId: start.id,
-                        startStationName: start.name,
-                        endStationId: end.id,
-                        endStationName: end.name
-                    });
-                }
-            }
-        }
-    }
+    const possiblePairs = getPossiblePairs(stations, map);
 
     if (possiblePairs.length === 0) {
         throw new Error("Nessuna coppia di stazioni disponibile.");
     }
 
-    const pair = possiblePairs[Math.floor(Math.random() * possiblePairs.length)];
+    const pair = randomElement(possiblePairs);
 
     const sql = `
       INSERT INTO games(user_id, start_station_id, end_station_id, initial_coins, status, started_at)
@@ -380,8 +403,7 @@ export const startGame = async (userId) => {
     `;
 
     const result = await runAsync(
-        sql,
-        [userId, pair.startStationId, pair.endStationId]
+        sql, [userId, pair.startStationId, pair.endStationId]
     );
 
     return {
@@ -411,7 +433,7 @@ export const submitGame = async (gameId, userId, path) => {
         return { alreadyCompleted: true };
     }
 
-    if (game.seconds > 90) {
+    if (game.seconds >= 90) {
         await completeGame(gameId, 0);
 
         return {
@@ -441,7 +463,7 @@ export const submitGame = async (gameId, userId, path) => {
 
     for (let i = 0; i < validation.steps.length; i++) {
         const step = validation.steps[i];
-        const event = events[Math.floor(Math.random() * events.length)];
+        const event = randomElement(events);
 
         coins += event.effect;
 

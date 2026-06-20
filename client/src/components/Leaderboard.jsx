@@ -28,7 +28,11 @@ function Leaderboard(props) {
                 <>
                     {error && <Alert variant="danger">{error}</Alert>}
 
-                    <Table striped bordered hover>
+                    {leaderboard.length === 0 && !error && (
+                        <Alert variant="info">Nessuna partita completata.</Alert>
+                    )}
+
+                    <Table striped bordered>
                         <thead>
                             <tr>
                                 <th>Posizione</th>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, Badge, Button, Card, Col, ListGroup, Row, Spinner } from 'react-bootstrap';
 import { Link, useLocation, useNavigate, useParams } from 'react-router';
 
@@ -11,8 +11,8 @@ function edgeLabel(edge) {
 
 function Play() {
   const { gameId } = useParams();
-  const location = useLocation();
   const navigate = useNavigate();
+  const location = useLocation();
   const game = location.state;
 
   const [endTime, setEndTime] = useState(null);
@@ -30,10 +30,9 @@ function Play() {
       navigate('/setup', { replace: true });
       return;
     }
-    API.getNetwork()
+    API.getPlayNetwork()
       .then((network) => {
         setNetwork(network);
-        setSelectedPath([game.startStation.id]);
         setEndTime(Date.now() + 90000);
       })
       .catch(() => setError('Errore nel caricamento della partita.'));
@@ -58,20 +57,17 @@ function Play() {
 
   }, [game, submitted, endTime, selectedPath]);
 
-  const stationById = useMemo(() => {
-    const map = new Map();
-
-    if (network) {
-      for (const station of network.stations) {
-        map.set(station.id, station);
-      }
+  function getStationName(stationId) {
+    const station = network.stations.find((station) => station.id === stationId);
+    if (station) {
+      return station.name;
+    } else {
+      return undefined;
     }
-
-    return map;
-  }, [network]);
+  }
 
   function getEdgeKey(a, b) {
-    return [Math.min(a, b), Math.max(a, b)].join('-');
+    return Math.min(a, b) + "-" + Math.max(a, b);
   }
 
   function isEdgeUsable(edge) {
@@ -82,19 +78,35 @@ function Play() {
     if (submitted) return;
     if (!isEdgeUsable(edge)) return;
 
-    const currentStationId = selectedPath[selectedPath.length - 1];
+    let newStations;
 
-    let nextStationId;
-
-    if (edge.fromStationId === currentStationId) {
-      nextStationId = edge.toStationId;
-    } else if (edge.toStationId === currentStationId) {
-      nextStationId = edge.fromStationId;
+    if (selectedPath.length === 0) {
+      if (edge.fromStationId === game.startStation.id) {
+        newStations = [edge.fromStationId, edge.toStationId];
+      }
+      else if (edge.toStationId === game.startStation.id) {
+        newStations = [edge.toStationId, edge.fromStationId];
+      }
+      else {
+        newStations = [edge.fromStationId, edge.toStationId];
+      }
     } else {
-      nextStationId = edge.fromStationId;
+      const currentStationId = selectedPath[selectedPath.length - 1];
+
+      let nextStationId;
+
+      if (edge.fromStationId === currentStationId) {
+        nextStationId = edge.toStationId;
+      } else if (edge.toStationId === currentStationId) {
+        nextStationId = edge.fromStationId;
+      } else {
+        nextStationId = edge.fromStationId;
+      }
+
+      newStations = [...selectedPath, nextStationId];
     }
 
-    setSelectedPath((oldPath) => [...oldPath, nextStationId]);
+    setSelectedPath(newStations);
 
     setUsedEdges((oldEdges) => [
       ...oldEdges,
@@ -104,9 +116,13 @@ function Play() {
 
   function removeLastEdge() {
     if (submitted) return;
-    if (selectedPath.length <= 1) return;
+    if (usedEdges.length === 0) return;
 
-    setSelectedPath((oldPath) => oldPath.slice(0, -1));
+    if (selectedPath.length === 2) {
+      setSelectedPath([]);
+    } else {
+      setSelectedPath((oldPath) => oldPath.slice(0, -1));
+    }
 
     setUsedEdges((oldEdges) => oldEdges.slice(0, -1));
   }
@@ -114,18 +130,18 @@ function Play() {
   function clearPath() {
     if (submitted) return;
 
-    setSelectedPath([game.startStation.id]);
+    setSelectedPath([]);
     setUsedEdges([]);
   }
 
-  async function submitPath(pathToSubmit = selectedPath) {
+  async function submitPath(pathToSubmit) {
     if (submitted) return;
 
     setSubmitted(true);
     setError('');
 
     try {
-      const response = await API.submitGame(gameId, selectedPath);
+      const response = await API.submitGame(gameId, pathToSubmit);
       setResult(response);
       setCurrentStepIndex(0);
     } catch {
@@ -142,13 +158,16 @@ function Play() {
     return <Spinner animation="border" />;
   }
 
-  const currentStep =
-    result?.valid && result.steps.length > 0
-      ? result.steps[currentStepIndex]
-      : null;
+  let currentStep = null;
+  let executionCompleted = false;
 
-  const executionCompleted =
-    result?.valid && currentStepIndex >= result.steps.length - 1;
+  if (result && result.valid && result.steps.length > 0) {
+    currentStep = result.steps[currentStepIndex];
+
+    if (currentStepIndex >= result.steps.length - 1) {
+      executionCompleted = true;
+    }
+  }
 
   return (
     <>
@@ -235,19 +254,19 @@ function Play() {
                   <ol>
                     {selectedPath.map((stationId, index) => (
                       <li key={`${stationId}-${index}`}>
-                        {stationById.get(stationId)?.name}
+                        {getStationName(stationId)}
                       </li>
                     ))}
                   </ol>
 
-                  <Button onClick={submitPath} disabled={submitted}>
+                  <Button onClick={() => submitPath(selectedPath)} disabled={submitted}>
                     Invia percorso
                   </Button>
                   <Button
                     variant="warning"
                     className="ms-2"
                     onClick={removeLastEdge}
-                    disabled={submitted || selectedPath.length <= 1}
+                    disabled={submitted || usedEdges.length === 0}
                   >
                     Rimuovi ultima tratta
                   </Button>
@@ -278,7 +297,7 @@ function Play() {
               </Alert>
             ) : (
               <Alert variant="danger">
-                Percorso non valido: {result.reason}. Punteggio finale: <strong>0</strong> <i className="bi bi-coin"></i>
+                Percorso non valido! {result.reason}. Punteggio finale: <strong>0</strong> <i className="bi bi-coin"></i>
               </Alert>
             )}
 
@@ -292,8 +311,8 @@ function Play() {
 
                     <p>
                       <strong>Percorso:</strong>{' '}
-                      {stationById.get(currentStep.fromStationId)?.name} →{' '}
-                      {stationById.get(currentStep.toStationId)?.name}
+                      {getStationName(currentStep.fromStationId)} →{' '}
+                      {getStationName(currentStep.toStationId)}
                     </p>
 
                     <p>

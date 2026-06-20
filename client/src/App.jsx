@@ -48,11 +48,11 @@ function App() {
 
   return (
     <>
-      <Navigation user={user} loggedIn={loggedIn} onLogout={handleLogout} />
+      <Navigation user={user} loggedIn={loggedIn} handleLogout={handleLogout} />
       <Container className="py-4">
         <Routes>
           <Route path="/" element={<Home loggedIn={loggedIn} />} />
-          <Route path="/login" element={loggedIn ? <Navigate replace to="/" /> : <Login onLogin={handleLogin} />} />
+          <Route path="/login" element={loggedIn ? <Navigate replace to="/" /> : <Login handleLogin={handleLogin} />} />
           <Route path="/setup" element={loggedIn ? <Setup /> : <Navigate replace to="/login" />} />
           <Route path="/play/:gameId" element={loggedIn ? <Play /> : <Navigate replace to="/login" />} />
           <Route path="/leaderboard" element={<Leaderboard loggedIn={loggedIn} />} />
