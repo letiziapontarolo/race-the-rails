@@ -4,7 +4,7 @@
 
 ## React Client Application Routes
 
-- Route `/`: home page containing the game instructions. Anonymous users can only access this page
+- Route `/`: home page containing the game instructions. Anonymous users can only access this page and the login page
 - Route `/login`: login page
 - Route `/setup`: setup phase showing the complete underground map before starting a game
 - Route `/play/:gameId`: planning, execution and result phase of a game identified by gameId
