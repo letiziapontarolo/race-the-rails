@@ -21,31 +21,16 @@ function Home(props) {
 
             {props.loggedIn ? (
                 <>
-                    <Alert variant="success">
-                        Sei autenticato. Puoi iniziare una nuova partita.
-                    </Alert>
-
-                    <Button as={Link} to="/setup" className="me-2">
-                        Inizia una partita
-                    </Button>
-
-                    <Button as={Link} to="/leaderboard" variant="secondary">
-                        Vai alla classifica
-                    </Button>
+                    <Alert variant="success">Sei autenticato. Puoi iniziare una nuova partita.</Alert>
+                    <Button as={Link} to="/setup" className="me-2">Inizia una partita</Button>
+                    <Button as={Link} to="/leaderboard" variant="secondary">Vai alla classifica</Button>
                 </>
             ) : (
                 <>
-                    <Alert variant="warning">
-                        Gli utenti anonimi possono vedere solo le istruzioni. Per giocare devi fare login.
-                    </Alert>
-
-                    <Button as={Link} to="/login">
-                        Login
-                    </Button>
+                    <Alert variant="warning"> Gli utenti anonimi possono vedere solo le istruzioni. Per giocare devi fare login.</Alert>
+                    <Button as={Link} to="/login"> Login</Button>
                 </>
             )}
-
-
         </>
     );
 }

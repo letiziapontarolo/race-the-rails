@@ -1,14 +1,12 @@
-// imports
 import express from "express";
-import morgan from "morgan";
-import { getUser,  getSetupNetwork, getPlayNetwork, getLeaderboard, startGame, submitGame } from './dao.js';
 import { check, validationResult } from "express-validator";
-
+import session from 'express-session';
+import morgan from "morgan";
 import passport from 'passport';
 import LocalStrategy from 'passport-local';
-import session from 'express-session';
-
 import cors from "cors";
+
+import { getUser,  getSetupNetwork, getPlayNetwork, getLeaderboard, startGame, submitGame } from './dao.js';
 
 
 // init express
@@ -36,6 +34,7 @@ passport.serializeUser(function (user, cb) {
 passport.deserializeUser(function (user, cb) {
   return cb(null, user);
 });
+
 
 const isLoggedIn = (req, res, next) => {
   if (req.isAuthenticated()) {

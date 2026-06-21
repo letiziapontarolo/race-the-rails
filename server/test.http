@@ -35,7 +35,7 @@ GET http://localhost:3001/api/leaderboard
 POST http://localhost:3001/api/games/start
 
 ### Submit game
-POST http://localhost:3001/api/games/51/submit
+POST http://localhost:3001/api/games/1/submit
 Content-Type: application/json
 
 {

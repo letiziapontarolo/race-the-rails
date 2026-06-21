@@ -6,7 +6,7 @@
 
 - Route `/`: home page containing the game instructions. Anonymous users can only access this page
 - Route `/login`: login page
-- Route `/setup`: setup phase showing the complete London Underground map before starting a game
+- Route `/setup`: setup phase showing the complete underground map before starting a game
 - Route `/play/:gameId`: planning, execution and result phase of a game identified by gameId
 - Route `/leaderboard`: leaderboard showing the best score of each user
 
@@ -54,7 +54,7 @@
   - Response body: none
 
 - GET `/api/network/setup`    
-  - Description: returns all stations, all metro lines and the association between stations and lines (including their order on each line)
+  - Description: returns all stations and all metro lines, each containing the ordered list of stations belonging to that line
   - Request body: none
   - Response: `200 OK` (success), `401 Unauthorized` (failure, not authenticated) or `500 Internal Server Error` (failure)
   - Response body: a JSON object representing the network used during the setup phase
@@ -76,31 +76,20 @@
         {
           "id": 1,
           "name": "Bakerloo Line",
-          "color": "brown"
-        },
-        {
-          "id": 2,
-          "name": "Central Line",
-          "color": "red"
-        },
-        ...
-      ],
-      "lineStations": [
-        {
-          "lineId": 1,
-          "lineName": "Bakerloo Line",
-          "lineColor": "brown",
-          "stationId": 1,
-          "stationName": "Paddington",
-          "position": 1
-        },
-        {
-          "lineId": 1,
-          "lineName": "Bakerloo Line",
-          "lineColor": "brown",
-          "stationId": 2,
-          "stationName": "Marylebone",
-          "position": 2
+          "color": "brown",
+          "stations": [
+            {
+              "id": 1,
+              "name": "Paddington",
+              "position": 1
+            },
+            {
+              "id": 2,
+              "name": "Marylebone",
+              "position": 2
+            },
+            ...
+          ]
         },
         ...
       ]
@@ -108,7 +97,7 @@
     ```
 
 - GET `/api/network/play`    
-  - Description: returns all stations and all directly connected station pairs
+  - Description: returns all stations and all available connections between adjacent stations
   - Request body: none
   - Response: `200 OK` (success), `401 Unauthorized` (failure, not authenticated) or `500 Internal Server Error` (failure)
   - Response body: a JSON object representing the data required during the game
@@ -131,13 +120,15 @@
           "fromStationId": 3,
           "fromStationName": "Baker Street",
           "toStationId": 9,
-          "toStationName": "Bond Street"
+          "toStationName": "Bond Street",
+          "edgeKey": "3-9"
         },
         {
           "fromStationId": 3,
           "fromStationName": "Baker Street",
           "toStationId": 15,
-          "toStationName": "Great Portland Street"
+          "toStationName": "Great Portland Street",
+          "edgeKey": "3-15"
         },
         ...
       ]
@@ -214,7 +205,9 @@
         {
           "stepOrder": 1,
           "fromStationId": 12,
+          "fromStationName": "Holborn",
           "toStationId": 11,
+          "toStationName": "British Museum",
           "event": 
           {
             "id": 14,
@@ -226,7 +219,9 @@
         {
           "stepOrder": 2,
           "fromStationId": 11,
+          "fromStationName": "British Museum",
           "toStationId": 10,
+          "toStationName": "Tottenham Court Road",
           "event":
           {
             "id": 2,
@@ -255,7 +250,7 @@
 - `Home` (in `Home.jsx`): instructions page
 - `Login` (in `Login.jsx`): login form
 - `Navigation` (in `Navigation.jsx`): top navigation bar with login/logout, home, leaderboard and play
-- `MetroMap` (in `MetroMap.jsx`): renders the London Underground map using SVG
+- `MetroMap` (in `MetroMap.jsx`): renders the underground map using SVG
 - `Setup` (in `Setup.jsx`): setup phase before the game starts
 - `Play` (in `Play.jsx`): planning, execution and result phases
 - `Leaderboard` (in `Leaderboard.jsx`): displays the leaderboard
@@ -277,4 +272,4 @@
 
 ## Use of AI Tools
 
-ChatGPT was used to help design the London metro network (selection of lines, stations, and interchange stations) and to assist in creating the SVG map layout and to perform code reviews aimed at checking the consistency of the implementation with the project specifications.
+ChatGPT was used to help design the underground network (selection of lines, stations, and interchange stations), to assist in creating the SVG map layout and to perform code reviews aimed at checking the consistency of the implementation with the project specifications.

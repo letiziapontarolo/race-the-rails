@@ -29,6 +29,7 @@ const stationPositions = {
   'Victoria': { x: 500, y: 600, label: { x: 0, y: -25 } }
 };
 
+
 const colorMap = {
   brown: '#8b5a2b',
   red: '#dc3545',
@@ -37,28 +38,19 @@ const colorMap = {
   blue: '#0d6efd'
 };
 
-function MetroMap(props) {
-  const groupedLines = props.network.lines.map((line) => {
-    const stations = props.network.lineStations
-      .filter((ls) => ls.lineId === line.id)
-      .sort((a, b) => a.position - b.position);
 
-    return {
-      id: line.id,
-      name: line.name,
-      color: line.color,
-      stations: stations
-    };
-  });
+function MetroMap(props) {
 
   return (
     <div className="metro-map-wrapper">
       <svg viewBox="0 0 1200 640" className="metro-map">
-        {props.showLines && groupedLines.map((line) => (
+
+        {props.showLines && props.network.lines.map((line) => (
+          
           <polyline
             key={line.id}
-            points={line.stations.map((s) => {
-              const position = stationPositions[s.stationName];
+            points={line.stations.map((station) => {
+              const position = stationPositions[station.name];
               return `${position.x},${position.y}`;
             }).join(' ')}
             fill="none"
@@ -92,13 +84,7 @@ function MetroMap(props) {
                 cx={position.x}
                 cy={position.y}
                 r="11"
-                fill={
-                  isStart
-                    ? '#28a745'
-                    : isEnd
-                      ? '#dc3545'
-                      : 'white'
-                }
+                fill={isStart ? '#28a745' : isEnd ? '#dc3545' : 'white'}
                 stroke="#111"
                 strokeWidth="3"
               />
@@ -109,6 +95,7 @@ function MetroMap(props) {
                 className={isStart || isEnd ? 'station-label station-label-important' : 'station-label'}
                 textAnchor="middle"
               >
+
                 {labelText.map((name, index) => (
                   <tspan
                     key={name}
@@ -118,6 +105,7 @@ function MetroMap(props) {
                     {name}
                   </tspan>
                 ))}
+
               </text>
             </g>
           );
@@ -128,10 +116,7 @@ function MetroMap(props) {
         <div className="metro-legend">
           {props.network.lines.map((line) => (
             <span key={line.id} className="legend-item">
-              <span
-                className="legend-color"
-                style={{ backgroundColor: colorMap[line.color] || line.color }}
-              />
+              <span className="legend-color" style={{ backgroundColor: colorMap[line.color] || line.color }}/>
               {line.name}
             </span>
           ))}

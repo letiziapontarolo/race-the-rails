@@ -5,18 +5,22 @@ import { useNavigate } from 'react-router';
 import API from '../API/API.js';
 import MetroMap from './MetroMap.jsx';
 
+
 function Setup() {
+
+   const navigate = useNavigate();
+
   const [network, setNetwork] = useState(null);
   const [error, setError] = useState('');
   const [starting, setStarting] = useState(false);
 
-  const navigate = useNavigate();
 
   useEffect(() => {
     API.getSetupNetwork()
       .then(setNetwork)
       .catch(() => setError('Errore nel caricamento della rete.'));
   }, []);
+
 
   async function handleStartGame() {
     setStarting(true);
@@ -30,6 +34,7 @@ function Setup() {
       setStarting(false);
     }
   }
+
 
   return (
     <>
@@ -52,10 +57,7 @@ function Setup() {
         </Card>
       )}
 
-      <Button
-        onClick={handleStartGame}
-        disabled={!network || starting}
-      >
+      <Button onClick={handleStartGame} disabled={!network || starting}>
         {starting ? 'Creazione partita...' : 'Inizia partita'}
       </Button>
     </>

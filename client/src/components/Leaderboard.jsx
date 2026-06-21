@@ -3,9 +3,12 @@ import { Alert, Table } from 'react-bootstrap';
 
 import API from '../API/API.js';
 
+
 function Leaderboard() {
+
     const [leaderboard, setLeaderboard] = useState([]);
     const [error, setError] = useState('');
+
 
     useEffect(() => {
         API.getLeaderboard()
@@ -13,15 +16,14 @@ function Leaderboard() {
             .catch(() => setError('Errore nel caricamento della classifica.'));
     }, []);
 
+
     return (
         <>
             <h1>Classifica generale</h1>
 
             {error && <Alert variant="danger">{error}</Alert>}
 
-            {leaderboard.length === 0 && !error && (
-                <Alert variant="info">Nessuna partita completata.</Alert>
-            )}
+            {leaderboard.length === 0 && !error && (<Alert variant="info">Nessuna partita completata.</Alert>)}
 
             <Table striped bordered>
                 <thead>

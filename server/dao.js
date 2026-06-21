@@ -9,15 +9,6 @@ const db = new sqlite.Database("database.sqlite", (err) => {
 
 
 // Funzioni helper per le Promise
-const getAsync = (sql, params = []) => {
-    return new Promise((resolve, reject) => {
-        db.get(sql, params, (err, row) => {
-            if (err) reject(err);
-            else resolve(row);
-        });
-    });
-};
-
 const allAsync = (sql, params = []) => {
     return new Promise((resolve, reject) => {
         db.all(sql, params, (err, rows) => {
@@ -78,12 +69,6 @@ export const getSetupNetwork = async () => {
     `;
 
     const linesSql = `
-      SELECT id, name, color
-      FROM lines
-      ORDER BY id
-    `;
-
-    const lineStationsSql = `
       SELECT 
         l.id AS lineId,
         l.name AS lineName,
@@ -91,20 +76,41 @@ export const getSetupNetwork = async () => {
         s.id AS stationId,
         s.name AS stationName,
         ls.position
-      FROM line_stations ls
-      JOIN lines l ON ls.line_id = l.id
+      FROM lines l
+      JOIN line_stations ls ON l.id = ls.line_id
       JOIN stations s ON ls.station_id = s.id
       ORDER BY l.id, ls.position
     `;
 
     const stations = await allAsync(stationsSql);
-    const lines = await allAsync(linesSql);
-    const lineStations = await allAsync(lineStationsSql);
+    const rows = await allAsync(linesSql);
+
+    const lines = [];
+
+    for (const row of rows) {
+        let line = lines.find((line) => line.id === row.lineId);
+
+        if (!line) {
+            line = {
+                id: row.lineId,
+                name: row.lineName,
+                color: row.lineColor,
+                stations: []
+            };
+
+            lines.push(line);
+        }
+
+        line.stations.push({
+            id: row.stationId,
+            name: row.stationName,
+            position: row.position
+        });
+    }
 
     return {
         stations,
-        lines,
-        lineStations
+        lines
     };
 };
 
@@ -120,7 +126,8 @@ export const getPlayNetwork = async () => {
         s1.id AS fromStationId,
         s1.name AS fromStationName,
         s2.id AS toStationId,
-        s2.name AS toStationName
+        s2.name AS toStationName,
+        MIN(s1.id, s2.id) || '-' || MAX(s1.id, s2.id) AS edgeKey
       FROM line_stations ls1
       JOIN line_stations ls2
         ON ls1.line_id = ls2.line_id
@@ -162,12 +169,13 @@ export const getLeaderboard = () => {
 
 /* GAMES HELPERS */
 
-// Recupera tutte le tratte tra stazioni adiacenti
+// Recupera tutte le tratte tra stazioni adiacenti, con una chiave unica edgeKey
 const getEdges = () => {
     const sql = `
       SELECT DISTINCT
         s1.id AS fromStationId,
         s2.id AS toStationId,
+        MIN(s1.id, s2.id) || '-' || MAX(s1.id, s2.id) AS edgeKey,
         ls1.line_id AS lineId
       FROM line_stations ls1
       JOIN line_stations ls2 
@@ -274,10 +282,6 @@ const randomElement = (array) => {
     return array[Math.floor(Math.random() * array.length)];
 };
 
-// Genera una chiave unica per identificare una tratta (es: "1-2")
-const getEdgeKey = (a, b) => {
-    return Math.min(a, b) + "-" + Math.max(a, b);
-};
 
 // Controlla che il percorso inviato sia valido
 const validatePath = async (game, path) => {
@@ -294,33 +298,30 @@ const validatePath = async (game, path) => {
         return { valid: false, reason: 'Il percorso non finisce alla stazione assegnata.' };
     }
 
-    // Costruisce un set con tutti gli id delle stazioni
-    const stationsId = new Set((await getStations()).map((station) => station.id));
+    // Costruisce una mappa idStazione -> nomeStazione
+    const stationMap = new Map((await getStations()).map((station) => [station.id, station.name]));
 
     for (const stationId of path) {
-        if (!Number.isInteger(stationId) || !stationsId.has(stationId)) {
+        if (!Number.isInteger(stationId) || !stationMap.has(stationId)) {
             return { valid: false, reason: 'Il percorso contiene una stazione sconosciuta.' };
         }
     }
 
-    // Costruisce un set per le tratte già usate
+    // Memorizza le tratte già usate, così una stessa tratta non può essere percorsa due volte
     const usedEdges = new Set();
 
     // Costruisce un array per gli step verificati
     const validatedSteps = [];
 
-    // Costruisce una mappa con chiave = tratta (getEdgeKey) e valore = linea che collega la tratta (lineId)
-    const edgeMap = new Map((await getEdges()).map((edge) => [
-        getEdgeKey(edge.fromStationId, edge.toStationId),
-        edge.lineId])
-    );
+    // Costruisce una mappa edgeKey -> lineId
+    const edgeMap = new Map((await getEdges()).map((edge) => [edge.edgeKey, edge.lineId]));
 
-    // Scorre ogni tratta del path
+    // Controlla ogni coppia di stazioni consecutive del percorso
     for (let i = 0; i < path.length - 1; i++) {
         const fromStationId = path[i];
         const toStationId = path[i + 1];
 
-        const edgeKey = getEdgeKey(fromStationId, toStationId);
+        const edgeKey = Math.min(fromStationId, toStationId) + "-" + Math.max(fromStationId, toStationId);
 
         if (usedEdges.has(edgeKey)) {
             return { valid: false, reason: 'Una tratta è usata più di una volta.' };
@@ -338,7 +339,9 @@ const validatePath = async (game, path) => {
         // Aggiunge la tratta all'array di step verificati
         validatedSteps.push({
             fromStationId,
+            fromStationName: stationMap.get(fromStationId),
             toStationId,
+            toStationName: stationMap.get(toStationId),
             lineId: edgeMap.get(edgeKey)
         });
     }
@@ -409,12 +412,17 @@ const completeGame = async (gameId, finalScore) => {
 const getGame = (gameId, userId) => {
     const sql = `
       SELECT *,
-      (strftime('%s','now','localtime') - strftime('%s', started_at)) AS seconds
+        (strftime('%s','now','localtime') - strftime('%s', started_at)) AS seconds
       FROM games
       WHERE id = ? AND user_id = ?
     `;
 
-    return getAsync(sql, [gameId, userId]);
+    return new Promise((resolve, reject) => {
+        db.get(sql, [gameId, userId], (err, row) => {
+            if (err) reject(err);
+            else resolve(row);
+        });
+    });
 };
 
 /* GAMES */
@@ -507,7 +515,9 @@ export const submitGame = async (gameId, userId, path) => {
         resultSteps.push({
             stepOrder: i + 1,
             fromStationId: step.fromStationId,
+            fromStationName: step.fromStationName,
             toStationId: step.toStationId,
+            toStationName: step.toStationName,
             event: {
                 id: event.id,
                 description: event.description,
