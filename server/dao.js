@@ -461,7 +461,7 @@ export const submitGame = async (gameId, userId, path) => {
         return { alreadyCompleted: true };
     }
 
-    if (game.seconds > 90) {
+    if (game.seconds > 90.5) {
         await completeGame(gameId, 0);
 
         return {
