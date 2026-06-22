@@ -59,14 +59,15 @@ export const getUser = (username, password) => {
 };
 
 
+const stationsSql = `
+      SELECT *
+      FROM stations
+    `;
+
+
 // NETWORK
 
 export const getSetupNetwork = async () => {
-    const stationsSql = `
-      SELECT id, name
-      FROM stations
-      ORDER BY name
-    `;
 
     const linesSql = `
       SELECT 
@@ -115,11 +116,6 @@ export const getSetupNetwork = async () => {
 };
 
 export const getPlayNetwork = async () => {
-    const stationsSql = `
-      SELECT id, name
-      FROM stations
-      ORDER BY name
-    `;
 
     const edgesSql = `
       SELECT DISTINCT
@@ -188,16 +184,6 @@ const getEdges = () => {
     return allAsync(sql);
 };
 
-// Recupera tutte le stazioni
-const getStations = () => {
-    const sql = `
-      SELECT *
-      FROM stations
-    `;
-
-    return allAsync(sql);
-};
-
 // Costruisce una mappa che rappresenta il grafo della rete (stazioni=vertici, tratte=archi) del tipo:
 // Map {
 //     1 => [2],
@@ -218,7 +204,7 @@ const buildMap = (stations, edges) => {
     return map;
 };
 
-// Calcola la distanza minima tra due stazioni tramite Breadth-First Search
+// Calcola la distanza minima tra due stazioni
 const shortestDistance = (map, startId, endId) => {
 
     // Crea la coda con la prima stazione
@@ -282,7 +268,6 @@ const randomElement = (array) => {
     return array[Math.floor(Math.random() * array.length)];
 };
 
-
 // Controlla che il percorso inviato sia valido
 const validatePath = async (game, path) => {
 
@@ -299,7 +284,7 @@ const validatePath = async (game, path) => {
     }
 
     // Costruisce una mappa idStazione -> nomeStazione
-    const stationMap = new Map((await getStations()).map((station) => [station.id, station.name]));
+    const stationMap = new Map((await allAsync(stationsSql)).map((station) => [station.id, station.name]));
 
     for (const stationId of path) {
         if (!Number.isInteger(stationId) || !stationMap.has(stationId)) {
@@ -428,7 +413,7 @@ const getGame = (gameId, userId) => {
 /* GAMES */
 
 export const startGame = async (userId) => {
-    const stations = await getStations();
+    const stations = await allAsync(stationsSql);
     const edges = await getEdges();
     const map = buildMap(stations, edges);
 

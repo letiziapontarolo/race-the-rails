@@ -63,12 +63,12 @@
     {
       "stations": [
         {
-          "id": 3,
-          "name": "Baker Street"
+          "id": 1,
+          "name": "Paddington"
         },
         {
-          "id": 18,
-          "name": "Barbican"
+          "id": 2,
+          "name": "Marylebone"
         },
         ...
       ],
@@ -106,12 +106,12 @@
     {
       "stations": [
         {
-          "id": 3,
-          "name": "Baker Street"
+          "id": 1,
+          "name": "Paddington"
         },
         {
-          "id": 18,
-          "name": "Barbican"
+          "id": 2,
+          "name": "Marylebone"
         },
         ...
       ],
@@ -186,7 +186,7 @@
     ```
 
 - POST `/api/games/:id/submit`  
-  - Description: validates the submitted path, generates random events and returns the final score
+  - Description: validates the submitted path, generates random events and returns the game result
   - Request body: a JSON object with the path
     ```
     {

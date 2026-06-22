@@ -14,9 +14,12 @@ import Leaderboard from "./components/Leaderboard.jsx";
 import './App.css'
 import API from "./API/API.js";
 
+
 function App() {
+
   const [loggedIn, setLoggedIn] = useState(false);
   const [user, setUser] = useState(undefined);
+
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -40,12 +43,14 @@ function App() {
     setLoggedIn(true);
   };
 
+
   const handleLogout = async () => {
     await API.logOut();
     setUser(undefined);
     setLoggedIn(false);
   };
 
+  
   return (
     <>
       <Navigation user={user} loggedIn={loggedIn} handleLogout={handleLogout} />
