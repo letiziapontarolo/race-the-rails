@@ -54,7 +54,7 @@ function Play() {
         submitPath();
       }
 
-    }, 500);
+    }, 250);
 
     return () => clearInterval(timer);
 
