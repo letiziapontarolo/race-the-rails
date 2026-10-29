@@ -32,7 +32,7 @@ function Play() {
     API.getPlayNetwork()
       .then((network) => {
         setNetwork(network);
-        setEndTime(Date.now() + 90000);
+        setEndTime(game.started_at + 90000);
       })
       .catch(() => setError('Errore nel caricamento della partita.'));
   }, [game, navigate]);

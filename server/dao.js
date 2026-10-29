@@ -445,7 +445,8 @@ export const startGame = async (userId) => {
             name: pair.endStationName
         },
         initialCoins: 20,
-        planningSeconds: 90
+        planningSeconds: 90,
+        started_at: Date.now()
     };
 };
 

@@ -1,7 +1,30 @@
-# dependencies
+# Dependencies
 node_modules/
 
-# misc
+# Build output
+dist/
+dist-ssr/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+logs/
+
+# Local database files and backups
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Editor and OS files
+.vscode/
+.idea/
 .DS_Store
 Thumbs.db
 Desktop.ini
