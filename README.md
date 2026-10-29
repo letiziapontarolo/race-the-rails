@@ -1,275 +1,215 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/iZes9Qfg)
-# Exam #1: "Ultima Corsa"
-## Student: s352496 PONTAROLO LETIZIA 
+![Race the Rails Cover](assets/cover.png)
 
-## React Client Application Routes
+# Race the Rails — Full-Stack Web Game
 
-- Route `/`: home page containing the game instructions. Anonymous users can only access this page and the login page
-- Route `/login`: login page
-- Route `/setup`: setup phase showing the complete underground map before starting a game
-- Route `/play/:gameId`: planning, execution and result phase of a game identified by gameId
-- Route `/leaderboard`: leaderboard showing the best score of each user
+**Race the Rails** is a full-stack, single-player web game developed as an individual academic project for the **Web Applications I (Applicazioni Web I)** course (2025-2026) at **Politecnico di Torino**.
 
-## API Server
+Inspired by the board game *Race the Rails*, the application challenges players to navigate a fictional London Underground network, plan a valid route under time pressure, and reach their destination with the highest possible score.
 
-- POST `/api/sessions`  
-  - Description: create a new session (i.e., perform the login)
-  - Request body: a JSON object with username and password
+The project was built using **React**, **Node.js**, **Express**, and **SQLite**, combining an interactive frontend with server-side game logic, RESTful APIs, session-based authentication, and persistent game data.
 
-    ```
-    { 
-      "username": "anna", 
-      "password": "Verdi99!" 
-    }
-    ```
-  - Response: `201 Created` (success) or `401 Unauthorized` (failure, wrong credentials)  
-  - Response body: a JSON object representing the authenticated user
+## Game Overview
 
-    ```
-    { 
-      "id": 3, 
-      "username": "anna", 
-      "name": "Anna Verdi" 
-    }
-    ```
+Each game begins with **20 coins** and two randomly assigned stations: a starting point and a destination.
 
-- GET `/api/sessions/current`    
-  - Description: check if the user is still logged in
-  - Request body: none
-  - Response: `200 OK` (success) or `401 Unauthorized` (failure, not authenticated)
-  - Response body: a JSON object representing the authenticated user
+Players have **90 seconds** to reconstruct the underground network from a list of available connections and plan a valid route.
 
-    ```
-    { 
-      "id": 3, 
-      "username": "anna", 
-      "name": "Anna Verdi" 
-    }
-    ```
+Once the route is submitted, the journey unfolds step by step. Random events may increase or decrease the player's coins, affecting the final score.
 
-- DELETE `/api/sessions/current`
-  - Description: delete the session for the current user (i.e., perform the logout)
-  - Request body: none
-  - Response: `200 OK` (success)
-  - Response body: none
+The objective is simple: **reach your destination before time runs out and finish with as many coins as possible.**
 
-- GET `/api/network/setup`    
-  - Description: returns all stations and all metro lines, each containing the ordered list of stations belonging to that line
-  - Request body: none
-  - Response: `200 OK` (success), `401 Unauthorized` (failure, not authenticated) or `500 Internal Server Error` (failure)
-  - Response body: a JSON object representing the network used during the setup phase
+## Game Phases
 
-    ```
-    {
-      "stations": [
-        {
-          "id": 1,
-          "name": "Paddington"
-        },
-        {
-          "id": 2,
-          "name": "Marylebone"
-        },
-        ...
-      ],
-      "lines": [
-        {
-          "id": 1,
-          "name": "Bakerloo Line",
-          "color": "brown",
-          "stations": [
-            {
-              "id": 1,
-              "name": "Paddington",
-              "position": 1
-            },
-            {
-              "id": 2,
-              "name": "Marylebone",
-              "position": 2
-            },
-            ...
-          ]
-        },
-        ...
-      ]
-    }
-    ```
+The game is organized into four main phases:
 
-- GET `/api/network/play`    
-  - Description: returns all stations and all available connections between adjacent stations
-  - Request body: none
-  - Response: `200 OK` (success), `401 Unauthorized` (failure, not authenticated) or `500 Internal Server Error` (failure)
-  - Response body: a JSON object representing the data required during the game
+### 1. Setup
 
-    ```
-    {
-      "stations": [
-        {
-          "id": 1,
-          "name": "Paddington"
-        },
-        {
-          "id": 2,
-          "name": "Marylebone"
-        },
-        ...
-      ],
-      "edges": [
-        {
-          "fromStationId": 3,
-          "fromStationName": "Baker Street",
-          "toStationId": 9,
-          "toStationName": "Bond Street",
-          "edgeKey": "3-9"
-        },
-        {
-          "fromStationId": 3,
-          "fromStationName": "Baker Street",
-          "toStationId": 15,
-          "toStationName": "Great Portland Street",
-          "edgeKey": "3-15"
-        },
-        ...
-      ]
-    }
-    ```  
+Before starting a game, players can explore the complete underground network, including its stations, metro lines, and interchange points.
 
-- GET `/api/leaderboard`    
-  - Description: returns the best score of each registered user
-  - Request body: none
-  - Response: `200 OK` (success), `401 Unauthorized` (failure, not authenticated) or `500 Internal Server Error` (failure)
-  - Response body: a JSON array representing the leaderboard
+### 2. Planning
 
-    ```
-    [
-      {
-        "username": "anna",
-        "name": "Anna Verdi",
-        "bestScore": 24
-      },
-      {
-        "username": "mario",
-        "name": "Mario Rossi",
-        "bestScore": 23
-      },
-      {
-        "username": "sofia",
-        "name": "Sofia Mosso",
-        "bestScore": 20
-      }
-    ]
-    ```
-  
-- POST `/api/games/start`  
-  - Description: create a new game for the authenticated user
-  - Request body: none
-  - Response: `201 Created` (success), `401 Unauthorized` (failure, not authenticated)  or `500 Internal Server Error` (failure)
-  - Response body: a JSON object representing the created game
+The game randomly assigns a starting station and a destination.
 
-    ```
-    {
-      "id": 5,
-      "startStation": 
-        {
-          "id": 12,
-          "name": "Holborn"
-        },
-      "endStation": 
-        {
-          "id": 14,
-          "name": "Royal Oak"
-        },
-      "initialCoins": 20,
-      "planningSeconds": 90
-    }
-    ```
+Players are shown a map containing the stations without their connections, alongside a list of available routes.
 
-- POST `/api/games/:id/submit`  
-  - Description: validates the submitted path, generates random events and returns the game result
-  - Request body: a JSON object with the path
-    ```
-    {
-      "path": [12, 11, 10, 5, 4, 3, 14]
-    }
-    ```
-  - Response: `200 OK` (success), `401 Unauthorized` (failure, not authenticated), `404 Not Found` (failure, game not found), `409 Conflict` (failure, game already completed), `422 Unprocessable Entity` (failure, request body malformed) or `500 Internal Server Error` (failure)
-  - Response body: a JSON object representing the game's final score and steps
+Within **90 seconds**, they must reconstruct a valid path between the assigned stations by selecting consecutive connections.
 
-    ```
-    {
-      "valid": true,
-      "finalScore": 17,
-      "steps": 
-      [
-        {
-          "stepOrder": 1,
-          "fromStationId": 12,
-          "fromStationName": "Holborn",
-          "toStationId": 11,
-          "toStationName": "British Museum",
-          "event": 
-          {
-            "id": 14,
-            "description": "Sciopero improvviso",
-            "effect": -3
-          },
-          "coinsAfter": 17
-        },
-        {
-          "stepOrder": 2,
-          "fromStationId": 11,
-          "fromStationName": "British Museum",
-          "toStationId": 10,
-          "toStationName": "Tottenham Court Road",
-          "event":
-          {
-            "id": 2,
-            "description": "Passeggero gentile",
-            "effect": 1
-          },
-          "coinsAfter": 18
-        },
-        ...
-      ]
-    }
-    ```
+Each connection can be used only once.
 
-## Database Tables
+### 3. Execution
 
-- Table `users` - contains registered users, hashed passwords and salts
-- Table `stations` - contains underground stations
-- Table `lines` - contains underground lines
-- Table `line_stations` - associates stations with lines and stores their order
-- Table `games` - contains information about each played game
-- Table `game_steps` - contains every segment travelled during a game and the associated event
-- Table `events` - contains random events and their effects on coins
+After submission, the server validates the selected path.
 
-## Main React Components
+For valid routes, the journey is executed step by step, with a random event occurring on each connection. Events can award or deduct coins.
 
-- `Home` (in `Home.jsx`): instructions page
-- `Login` (in `Login.jsx`): login form
-- `Navigation` (in `Navigation.jsx`): top navigation bar with login/logout, home, leaderboard and play
-- `MetroMap` (in `MetroMap.jsx`): renders the underground map using SVG
-- `Setup` (in `Setup.jsx`): setup phase before the game starts
-- `Play` (in `Play.jsx`): planning, execution and result phases
-- `Leaderboard` (in `Leaderboard.jsx`): displays the leaderboard
+Invalid or incomplete routes result in a score of zero.
 
-## Screenshot
+### 4. Results
 
-- Leaderboard  
-  ![Leaderboard](leaderboard.png)
+At the end of the journey, players receive their final score.
 
-- During a game  
-  ![Game](game1.png)
-  ![Game](game2.png)
+They can start a new game or visit the leaderboard to compare their best result with other players.
 
-## Users Credentials
+## Key Features
 
-- username: sofia, password: Sofia2026!
-- username: mario, password: Marioo00
-- username: anna, password: Verdi99!
+- **Interactive underground map:** Custom SVG visualization of a fictional London-inspired metro network.
+- **Timed route planning:** A 90-second challenge requiring players to reconstruct and navigate the network.
+- **Randomized gameplay:** Randomly assigned destinations and events make each game different.
+- **Server-side validation:** Routes, game results, and scoring are managed by the backend.
+- **Persistent game data:** Users, games, routes, events, and scores are stored in SQLite.
+- **User authentication:** Secure login and logout using Passport.js and session cookies.
+- **Leaderboard:** Ranking based on each registered player's highest score.
+- **Single-page application:** Client-side navigation and dynamic interfaces built with React.
 
-## Use of AI Tools
+## Screenshots
 
-ChatGPT was used to help design the underground network (selection of lines, stations, and interchange stations), to assist in creating the SVG map layout and to perform code reviews aimed at checking the consistency of the implementation with the project specifications.
+### Leaderboard
+
+The leaderboard displays the best score achieved by each registered player.
+
+![Leaderboard](leaderboard.png)
+
+### Gameplay
+
+The planning phase challenges players to construct a valid route before the countdown expires.
+
+![Gameplay Screenshot 1](game1.png)
+
+![Gameplay Screenshot 2](game2.png)
+
+## Tech Stack
+
+| Category | Technologies |
+|---|---|
+| Frontend | React, JavaScript, HTML, CSS |
+| Frontend tooling | Vite |
+| Backend | Node.js, Express |
+| Database | SQLite |
+| Authentication | Passport.js, session cookies |
+| API communication | HTTP, RESTful APIs, JSON |
+| Graphics | SVG |
+| Version control | Git, GitHub |
+
+## Application Architecture
+
+The application follows a **client-server architecture**, separating the user interface from the backend logic and persistent data.
+
+### Frontend
+
+The React client manages navigation, authentication interfaces, metro map visualization, route selection, the game countdown, and result presentation.
+
+The main application routes are:
+
+| Route | Description |
+|---|---|
+| `/` | Home page with game instructions |
+| `/login` | User authentication |
+| `/setup` | Complete underground map and game setup |
+| `/play/:gameId` | Planning, execution, and results for a game |
+| `/leaderboard` | Ranking of registered players |
+
+### Backend
+
+The Express server exposes HTTP APIs responsible for:
+
+- User authentication and session management.
+- Retrieving metro stations, lines, and connections.
+- Creating games with randomly assigned start and destination stations.
+- Validating submitted routes.
+- Generating random events and calculating scores.
+- Persisting game results and retrieving leaderboard data.
+
+The backend also implements graph-based logic to ensure that randomly selected station pairs satisfy the game's minimum-distance requirement.
+
+### Database
+
+SQLite stores the application's persistent data across seven tables:
+
+`users`, `stations`, `lines`, `line_stations`, `games`, `game_steps`, and `events`.
+
+User passwords are stored using salted hashes rather than plaintext.
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 24.x
+- npm
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/letiziapontarolo/race-the-rails.git
+cd race-the-rails
+```
+
+### 2. Start the backend
+
+Open a terminal and run:
+
+```bash
+cd server
+npm install
+npx nodemon index.js
+```
+
+The backend runs at `http://localhost:3001`.
+
+### 3. Start the frontend
+
+Open a second terminal from the project root and run:
+
+```bash
+cd client
+npm install
+npm run dev
+```
+
+Open the local URL displayed by Vite in your browser.
+
+The repository includes a pre-populated SQLite database with demo accounts, metro network data, random events, and sample game results.
+
+## Demo Accounts
+
+The application provides three predefined accounts for testing:
+
+| Username | Password |
+|---|---|
+| `sofia` | `Sofia2026!` |
+| `mario` | `Marioo00` |
+| `anna` | `Verdi99!` |
+
+These credentials are exclusively for local demonstration purposes.
+
+## Project Structure
+
+```text
+race-the-rails/
+├── assets/
+│   └── cover.png
+├── client/
+│   ├── public/
+│   ├── src/
+│   │   ├── API/
+│   │   ├── assets/
+│   │   ├── components/
+│   │   ├── App.jsx
+│   │   └── ...
+│   └── package.json
+├── server/
+│   ├── dao.js
+│   ├── database.sqlite
+│   ├── index.js
+│   ├── test.http
+│   └── package.json
+├── game1.png
+├── game2.png
+├── leaderboard.png
+└── README.md
+```
+
+## Disclaimer
+
+This repository contains an independent academic web application inspired by the board game *Race the Rails*.
+
+It is intended for educational and portfolio purposes and is not affiliated with the original game's creators or publishers.
